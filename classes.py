@@ -18,7 +18,7 @@ def rename_key_in_dict(old_dict,old_name,new_name):
 
 class sensor_df(object):
     def __init__(self, df=pd.DataFrame()):
-        """Initialize sensor object.
+        """Initialize sensor dataframe object.
         
         # =============================================================================
         Attributes:
@@ -59,7 +59,9 @@ class sensor_df(object):
             col_new[i] = a[n]*col[i]**n + a[n-1]*col[i]**(n-1) + ... 
             ... + a[1]*col[i] + a[0]"""
         for k in range(len(a_n)):
-            self.df[Column] = a_n[k]*self.df[Column]**k
+            self.df['NPoly_Column'] += a_n[k]*self.df[Column]**k
+        self.df[Column] = self.df['NPoly_Column']
+        self.df.pop('NPoly_Column')
         
     # def Exp_Modify_df(self, Column, A,B): # returns exp(a*col[i]+b)
     #     self.df[Column] = np.exp(A*self.df[Column]+B)   
@@ -293,7 +295,19 @@ class Sensor(object):
         self.signal_units_dict = signal_units_dict_out
         self.other_dict = other_dict_out
         self.plotkey = plotkey_out    
-              
+
+    def getdf(self, df_index = 1):
+        """returns the sensor_df of the selected dataframe.
+            df_index = 1(=default), 2 or 3"""
+            
+        if df_index == 1:
+            return self.df1
+        elif df_index == 2:
+            return self.df2
+        elif df_index==3:
+            return self.df3
+        else:
+            return self.df1           
             
     def getSubset(self, start, end, columns, df_index = 1):
         """returns the sensor_df subset of the given columns and selected dataframes.
@@ -301,41 +315,22 @@ class Sensor(object):
             end = end datetime (pd.datetime)
             columns = columns to export (str)
             df_index = 1(=default), 2 or 3"""
-        if df_index == 2:
-            return self.df2.getSubset_df(start, end, columns)
-        elif df_index==3:
-            return self.df3.getSubset_df(start, end, columns)
-        else:
-            return self.df3.getSubset_df(start, end, columns)
-        
+            
+        return self.getdf(df_index).getSubset_df(start,end,columns)
+    
     def Rename_sensor_signals(self, old_name, new_name, new_units=False, df_index=-1):
         """Rename a column/signal and all related attributes of a sensor_object.
             old_name = column/signal to modify (str)
             new_name = new name (str)
             new_units = units of new column/signal (str)
             df_index = 1,2,3, or -1(=all, default)"""
-        # Check in df:
-        column1_names = self.df1.df.columns.values.tolist()
-        column2_names = self.df2.df.columns.values.tolist()
-        column3_names = self.df3.df.columns.values.tolist()
-        
-        if df_index not in [2,3]:
-            if column1_names.count(old_name)>0:
-                pos_df1 = column1_names.index(old_name)
-                column1_names[pos_df1] = new_name     
-            self.df1.df.columns = column1_names
-        if df_index not in [1,3]:
-            if column2_names.count(old_name)>0:
-                pos_df2 = column2_names.index(old_name)
-                column2_names[pos_df2] = new_name     
-            self.df2.df.columns = column2_names
+                
+        if df_index == -1:
+            for i in range(3):
+                self.getdf(i+1).Rename_df_Column(old_name, new_name)
+        else:
+            self.getdf(df_index).Rename_df_Column(old_name, new_name)
             
-        if df_index not in [1,2]:
-            if column3_names.count(old_name)>0:
-                pos_df3 = column3_names.index(old_name)
-                column3_names[pos_df3] = new_name     
-            self.df3.df.columns = column3_names
-        
         # Check in signals:
         if self.signals.count(old_name)>0:
             pos_signals = self.signals.index(old_name)
@@ -363,29 +358,24 @@ class Sensor(object):
         if self.plotkey == old_name:
             self.plotkey = new_name
     
-    
     def addSubset(self, df_other, new_name = 'New List', new_units=' ', df_index = -1):
         """Adds a dataframe (to the right) to one/all sensor dataframes.
             df_other = dataframe to join (panda dataframe)
             new_name = new column name (string)
             new_units = new units for sensor object
             df_index = 1,2,3, or -1(=all, default)"""
+            
         given_name = df_other.columns[-1]       
         self.signals.append(given_name)
         self.mainsignals.append(given_name)
         self.signal_units_dict.update({given_name: new_units})
         
-        if df_index == 1:
-            self.df1.df = self.df1.df.join(df_other)
-        elif df_index == 2:
-            self.df2.df = self.df2.df.join(df_other)
-        elif df_index == 3:
-            self.df3.df = self.df3.df.join(df_other)
+        if df_index == -1:
+            for i in range(3):
+                self.getdf(i+1).df = self.getdf(i+1).df.join(df_other)
         else:
-            self.df1.df = self.df1.df.join(df_other)
-            self.df2.df = self.df2.df.join(df_other)
-            self.df3.df = self.df3.df.join(df_other)
-            
+            self.getdf(df_index).df = self.getdf(df_index).df.join(df_other)
+                    
         self.Rename_sensor_signals(given_name, new_name, new_units)
 
     def removeSubset(self, column, df_index = -1):
@@ -404,54 +394,39 @@ class Sensor(object):
                 
         if len(self.other_dict)>0:
             if len(self.other_dict.get(column,[]))>0:
-                self.other_dict.pop(column)                 
-        if df_index == 1:
-            self.df1.removeColumn_from_df(column)
-        elif df_index == 2:
-            self.df2.removeColumn_from_df(column)
-        elif df_index == 3:
-            self.df3.removeColumn_from_df(column)
+                self.other_dict.pop(column)     
+                
+        if df_index == -1:
+            for i in range(3):
+                self.getdf(i+1).removeColumn_from_df(column)
         else:
-            self.df1.removeColumn_from_df(column)
-            self.df2.removeColumn_from_df(column)
-            self.df3.removeColumn_from_df(column)
+            self.getdf(df_index).removeColumn_from_df(column)
             
         # Check in plotkey
         if self.plotkey == column:
             self.plotkey = self.signals[-1]
-            
-            
-    def dropDuplicates(self, column_to_check, df_index = -1):
+                
+    def dropDuplicates(self, column, df_index = -1):
         """Drops duplicate entries in the given column in one/all sensor dataframes.
-            column_to_check = column to check for duplicates
+            column = column to check for duplicates
             df_index = 1,2,3, or -1(=all, default)"""
-        if df_index == 1:
-            self.df1 = self.df1.drop_duplicates(column_to_check)
-        elif df_index == 2:
-            self.df2 = self.df2.drop_duplicates(column_to_check)
-        elif df_index == 3:
-            self.df3 = self.df3.drop_duplicates(column_to_check)
+        if df_index == -1:
+            for i in range(3):
+                self.getdf(i+1).dropDuplicates_in_df(column) 
         else:
-            self.df1 = self.df1.drop_duplicates(column_to_check)
-            self.df2 = self.df2.drop_duplicates(column_to_check)
-            self.df3 = self.df3.drop_duplicates(column_to_check)          
-            
-    
+            self.getdf(df_index).dropDuplicates_in_df(column) 
+             
     def Linear_Modify(self, Column, A,B, df_index=-1):
         """Linear modification of the given column in one/all sensor dataframes.
             Column = column to modify (str)
                 --> col_new[i] = A*col[i]+B
             df_index = 1,2,3, or -1(=all, default)"""
-        if df_index == 1:
-            self.df1.Linear_Modify_df(Column, A, B)
-        elif df_index == 2:
-            self.df2.Linear_Modify_df(Column, A, B)
-        elif df_index == 3:
-            self.df3.Linear_Modify_df(Column, A, B)
+
+        if df_index == -1:
+            for i in range(3):
+                self.getdf(i+1).Linear_Modify_df(Column, A, B)
         else:
-            self.df1.Linear_Modify_df(Column, A, B)
-            self.df2.Linear_Modify_df(Column, A, B)
-            self.df3.Linear_Modify_df(Column, A, B)
+            self.getdf(df_index).Linear_Modify_df(Column, A, B)
 
     def NPoly_Modify(self, Column, a_n = [0,1], df_index=-1):
         """N-polynomial modification of the given column in one/all sensor dataframes.
@@ -461,13 +436,9 @@ class Sensor(object):
             col_new[i] = a[n]*col[i]**n + a[n-1]*col[i]**(n-1) + ... 
             ... + a[1]*col[i] + a[0]
             df_index = 1,2,3, or -1(=all, default)"""
-        if df_index == 1:
-            self.df1.NPoly_Modify_df(Column, a_n=[0])
-        elif df_index == 2:
-            self.df2.NPoly_Modify_df(Column, a_n=[0])
-        elif df_index == 3:
-            self.df3.NPoly_Modify_df(Column, a_n=[0])
+
+        if df_index == -1:
+            for i in range(3):
+                self.getdf(df_index).NPoly_Modify_df(Column, a_n)
         else:
-            self.df1.NPoly_Modify_df(Column, a_n=[0])
-            self.df2.NPoly_Modify_df(Column, a_n=[0])
-            self.df3.NPoly_Modify_df(Column, a_n=[0])
+            self.getdf(df_index).NPoly_Modify_df(Column, a_n)

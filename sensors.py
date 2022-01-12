@@ -199,6 +199,8 @@ if __name__ == "__main__":
     
     for USE_ME,k in zip(Bool_List,range(len(Bool_List))):
         if USE_ME:
+            sensor_counts += 1
+            
             print('------------------------')
             Sensor_Name = Full_Name_List[k]
             Model_Name = Models_List[k]
@@ -269,11 +271,11 @@ if __name__ == "__main__":
             # For Debug purposes
             # SENSOR_Object.df3.df.to_csv(DATA_PATH_SAVE_EXPORT+'Debug_df3_{model}.csv'.format(model=Model_Name), sep=';', na_rep = 0, header=SENSOR_Object.df3.df.columns.values,quotechar = '#')
             
-            # # lazy solution: drop redundant 'start' timestamp
-            total_sensor_df.removeColumn_from_df('start')
-            SENSOR_Object.removeSubset('start')   
+            # # # lazy solution: drop redundant 'start' timestamp
+            # total_sensor_df.removeColumn_from_df('start')
+            # SENSOR_Object.removeSubset('start')   
             
-
+            
             # Update df   
             intervals_df_all = SENSOR_Object.df2.df
             intervals_df_export = SENSOR_Object.df3.df
@@ -287,18 +289,26 @@ if __name__ == "__main__":
             plotTitle = "{Sensor_Name}, Model: {sensor_model}".format(Sensor_Name=Sensor_Name,sensor_model=Model_Name)
             create_plot(y, yunits=SENSOR_Object.signal_units_dict.get(SENSOR_Object.plotkey), title=plotTitle, ytitle=str(SENSOR_Object.plotkey))
             
+            total_sensor_df.dropDuplicates_in_df('start')
             
-            #del(SENSOR_Object)
-            total_df = total_sensor_df.df.join(intervals_df_export,lsuffix='{}_'.format(Model_Name),how='outer')
-            total_df = total_df.backfill().ffill()
+            total_df = total_sensor_df.df.join(intervals_df_export,lsuffix='_{}'.format(Model_Name),how='outer')
+            total_df.drop_duplicates()
+            #total_df = total_df.backfill().ffill()
+            
             del(total_sensor_df)
             total_sensor_df = sensor_df(total_df)
             
-            sensor_counts += 1
-    
+            
+            # total_sensor_df.drop_duplicates_in_df()
+            # del(intervals_df_all)
+            # del(intervals_df_export)
+            # del(SENSOR_Object)
+            # del(total_df)
+            
     # Save exports
     total_sensor_df.df.to_csv(SAVE_PATH_EXPORT, sep=';', na_rep = 0,quotechar = '#')
-    
+
+
 print('Done')
 
 

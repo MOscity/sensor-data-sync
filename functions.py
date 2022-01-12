@@ -57,7 +57,8 @@ def ComPAS_Post_Script(SENSOR_Object):
     SENSOR_Object.addSubset(new_R2/214.7483648, 'R2', 'uPa') # Scale R to uPa
     SENSOR_Object.addSubset(new_Th2, 'Theta2', 'deg') # Theta in deg
     
-    SENSOR_Object.plotkey = 'R1'
+    SENSOR_Object.plotkey = 'Blue A Mov. Avg [Mm^-1]'
+    
     return SENSOR_Object
 
 def Check_Pre_Scripts(SENSOR_Object):
@@ -138,8 +139,6 @@ def my_days_format_function(x, pos=None):
 
 # def ExcelTime_to_Datetime(texc):
 #     return datetime.fromordinal(datetime(1900, 1, 1).toordinal() + texc - 2)
-
-
 
 
 
