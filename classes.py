@@ -1,4 +1,3 @@
-
 import pandas as pd
 # from functions import rename_key_in_dict
 
@@ -49,7 +48,11 @@ class sensor_df(object):
         """Linear modification of the given column in this dataframe.
             Column = column to modify (str)
             col_new[i] = A*col[i]+B"""
-        self.df[Column] = A*self.df[Column]+B
+        column_names = self.df.columns.values.tolist()
+        if column_names.count(Column)>0:
+            self.df[Column] = A*self.df[Column]+B
+        else:
+            raise Exception("There is no column named {col}".format(col=Column))
         
     def NPoly_Modify_df(self, Column, a_n=[0,1]): # returns a[n]*col[i]**n + a[n-1]*col[i]**(n-1) + ... + a[1]*col[i] + a[0]
         """Polynomial modification of the given column in this dataframe.
@@ -58,10 +61,16 @@ class sensor_df(object):
                     e.g. a_n = a_n=[0,1] for Linear Modification
             col_new[i] = a[n]*col[i]**n + a[n-1]*col[i]**(n-1) + ... 
             ... + a[1]*col[i] + a[0]"""
-        for k in range(len(a_n)):
-            self.df['NPoly_Column'] += a_n[k]*self.df[Column]**k
-        self.df[Column] = self.df['NPoly_Column']
-        self.df.pop('NPoly_Column')
+        column_names = self.df.columns.values.tolist()
+        if column_names.count(Column)>0:
+            self.df['NPoly_Column'] = a_n[0]
+            for k in range(1,len(a_n)):
+                self.df['NPoly_Column'] += a_n[k]*self.df[Column]**k
+                print('a_n[k] =', a_n[k], ' at k=',k)
+            self.df[Column] = self.df['NPoly_Column']
+            self.df.pop('NPoly_Column')
+        else:
+            raise Exception("There is no column named {col}".format(col=Column))
         
     # def Exp_Modify_df(self, Column, A,B): # returns exp(a*col[i]+b)
     #     self.df[Column] = np.exp(A*self.df[Column]+B)   
@@ -439,6 +448,6 @@ class Sensor(object):
 
         if df_index == -1:
             for i in range(3):
-                self.getdf(df_index).NPoly_Modify_df(Column, a_n)
+                self.getdf(i+1).NPoly_Modify_df(Column, a_n)
         else:
             self.getdf(df_index).NPoly_Modify_df(Column, a_n)

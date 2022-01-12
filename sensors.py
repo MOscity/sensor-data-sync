@@ -14,21 +14,22 @@ from matplotlib.ticker import FuncFormatter
 
 from functions import *
 from classes import *
+from scripts import *
 
 ## MAIN
 if __name__ == "__main__":
     
     config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/config.ini") 
     
-    ae33_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/AE33_settings.ini")
-    ae31_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/AE31_settings.ini")
-    ComPASV4_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/ComPAS-V4_settings.ini")
-    ComPASV5_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/ComPAS-V5_settings.ini")
-    PMSChinaSensor_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/PMSChinaSensor_settings.ini")
-    SMPS3080_Export_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/SMPS3080_Export_Settings.ini")
+    ae33_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/models_settings/AE33_settings.ini")
+    ae31_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/models_settings/AE31_settings.ini")
+    ComPASV4_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/models_settings/ComPAS-V4_settings.ini")
+    ComPASV5_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/models_settings/ComPAS-V5_settings.ini")
+    PMSChinaSensor_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/models_settings/PMSChinaSensor_settings.ini")
+    SMPS3080_Export_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/models_settings/SMPS3080_Export_Settings.ini")
     
-    SMPS3080_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/SMPS3080_Settings.ini") # not implemented yet
-    new_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/new_config.ini") # not implemented yet
+    SMPS3080_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/models_settings/SMPS3080_Settings.ini") # not implemented yet
+    new_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/models_settings/new_config.ini") # not implemented yet
     
     parser = argparse.ArgumentParser(description='Sensors utilities')
     
@@ -97,7 +98,9 @@ if __name__ == "__main__":
         SMPS_Model = 'SMPS3080_Export'
     elif args.SMPS3080:
         SMPS_Model = 'SMPS3080'
-        
+     
+    MSPTI_Model = 'MSPTI'
+    miniPTI_model = 'miniPTI'
     New_Model = 'New Model'
         
     
@@ -119,6 +122,8 @@ if __name__ == "__main__":
         USE_PMS = eval(config['GENERAL_SETTINGS']['PMS_Bool'])
         USE_ComPAS = eval(config['GENERAL_SETTINGS']['ComPAS_Bool'])
         USE_SMPS = eval(config['GENERAL_SETTINGS']['SMPS_Bool'])
+        USE_MSPTI = eval(config['GENERAL_SETTINGS']['MSPTI_Bool'])
+        USE_miniPTI = eval(config['GENERAL_SETTINGS']['miniPTI_Bool'])
         USE_NEW = eval(config['GENERAL_SETTINGS']['NEW_Bool'])
         
         DATA_PATH_SAVE_EXPORT   = eval(config['GENERAL_SETTINGS']['DATA_PATH_SAVE_EXPORT']) + '/'
@@ -136,6 +141,12 @@ if __name__ == "__main__":
         DATA_PATH_SMPS   = eval(config['GENERAL_SETTINGS']['DATA_PATH_SMPS']) + '/'
         FILE_EXT_SMPS   = eval(config['GENERAL_SETTINGS']['FILE_EXT_SMPS'])
         
+        DATA_PATH_MSPTI   = eval(config['GENERAL_SETTINGS']['DATA_PATH_MSPTI']) + '/'
+        FILE_EXT_MSPTI   = eval(config['GENERAL_SETTINGS']['FILE_EXT_MSPTI'])
+        
+        DATA_PATH_MINIPTI   = eval(config['GENERAL_SETTINGS']['DATA_PATH_MINIPTI']) + '/'
+        FILE_EXT_MINIPTI   = eval(config['GENERAL_SETTINGS']['FILE_EXT_MINIPTI'])
+        
         DATA_PATH_NEW   = eval(config['GENERAL_SETTINGS']['DATA_PATH_NEW']) + '/'
         FILE_EXT_NEW   = eval(config['GENERAL_SETTINGS']['FILE_EXT_NEW'])
 
@@ -149,6 +160,8 @@ if __name__ == "__main__":
         USE_PMS = True
         USE_ComPAS = True
         USE_SMPS = True
+        USE_MSPTI = False
+        USE_miniPTI = False
         USE_NEW = False
         
         DATA_PATH_SAVE = default_dir
@@ -156,14 +169,19 @@ if __name__ == "__main__":
         DATA_PATH_PMS = default_dir
         DATA_PATH_ComPAS = default_dir
         DATA_PATH_SMPS = default_dir
+        DATA_PATH_MSPTI = default_dir
+        DATA_PATH_MINIPTI = default_dir
         DATA_PATH_NEW = default_dir
         
         FILE_EXT_SAVE = 'Average_out.csv'
-        FILE_EXT_AETH   = 'AE33_sample.dat'
-        FILE_EXT_PMS = 'PMS1_sample.csv'
-        FILE_EXT_ComPAS = 'ComPASV4_sample.txt'
-        FILE_EXT_SMPS = 'SMPS3080_Export_sample.csv'
-        FILE_EXT_NEW = 'new_sensor.csv'
+        
+        FILE_EXT_AETH   = '/models_settings/AE33_sample.dat'
+        FILE_EXT_PMS = '/models_settings/PMS1_sample.csv'
+        FILE_EXT_ComPAS = '/models_settings/ComPASV4_sample.txt'
+        FILE_EXT_SMPS = '/models_settings/SMPS3080_Export_sample.csv'
+        FILE_EXT_MSPTI = '/models_settings/MSPTI_Export_sample.csv'
+        FILE_EXT_MINIPTI = '/models_settings/MiniPTI_Export_sample.csv'
+        FILE_EXT_NEW = '/models_settings/new_sensor.csv'
      
     # Define new constants
     SAVE_PATH_EXPORT = DATA_PATH_SAVE_EXPORT + FILE_EXT_SAVE_EXPORT
@@ -172,13 +190,15 @@ if __name__ == "__main__":
     PMS_File = DATA_PATH_PMS+FILE_EXT_PMS
     ComPAS_File = DATA_PATH_ComPAS+FILE_EXT_ComPAS
     SMPS_File = DATA_PATH_SMPS+FILE_EXT_SMPS
+    MSPTI_File = DATA_PATH_MSPTI+FILE_EXT_MSPTI
+    miniPTI_File = DATA_PATH_MINIPTI+FILE_EXT_MINIPTI
     NEW_File = DATA_PATH_NEW+FILE_EXT_NEW
 
-    Bool_List = [USE_AETH, USE_PMS, USE_ComPAS, USE_SMPS,USE_NEW]
+    Bool_List = [USE_AETH, USE_PMS, USE_ComPAS, USE_SMPS, USE_MSPTI, USE_miniPTI, USE_NEW]
     
-    Models_List = [AE_model,PMS_Model,ComPAS_model,SMPS_Model,New_Model]
-    Full_Name_List = ['Aethalometer', 'PMS China Sensor', 'ComPAS', 'SMPS','mySensor']
-    Path_List = [AETH_File,PMS_File,ComPAS_File,SMPS_File,NEW_File]
+    Models_List = [AE_model, PMS_Model, ComPAS_model, SMPS_Model, MSPTI_Model, miniPTI_model, New_Model]
+    Full_Name_List = ['Aethalometer', 'PMS China Sensor', 'ComPAS', 'SMPS','MSPTI', 'miniPTI', 'mySensor']
+    Path_List = [AETH_File, PMS_File, ComPAS_File, SMPS_File, MSPTI_File, miniPTI_File, NEW_File]
     #Sensor_Config_List = []
     
     
@@ -187,13 +207,15 @@ if __name__ == "__main__":
     header_list = []
     
     print('------------------------')
-    print('Modus:\t\t', MODE)
-    print('Frequency:\t', FREQ)
-    print('USE_AETH:\t',USE_AETH)
-    print('USE_PMS:\t',USE_PMS)
-    print('USE_ComPAS:\t',USE_ComPAS)
-    print('USE_SMPS:\t',USE_SMPS)
-    print('USE_NEW:\t',USE_NEW)
+    print('Modus:\t\t\t', MODE)
+    print('Frequency:\t\t', FREQ)
+    print('USE_AETH:\t\t',USE_AETH)
+    print('USE_PMS:\t\t',USE_PMS)
+    print('USE_ComPAS:\t\t',USE_ComPAS)
+    print('USE_SMPS:\t\t',USE_SMPS)
+    print('USE_MSPTI:\t\t',USE_MSPTI)
+    print('USE_miniPTI:\t',USE_miniPTI)
+    print('USE_NEW:\t\t',USE_NEW)
     
     sensor_counts = 0    
     
@@ -215,6 +237,10 @@ if __name__ == "__main__":
                 Sensor_Config = args.compas_ini
             elif Model_Name in ['SMPS3080_Export','SMPS3080']:
                 Sensor_Config = args.smps_ini
+            elif Model_Name in 'MSPTI':
+                Sensor_Config = args.mspti_ini
+            elif Model_Name in 'miniPTI':
+                Sensor_Config = args.minipti_ini
             else: # new model
                 Sensor_Config = None
                 
@@ -272,14 +298,18 @@ if __name__ == "__main__":
             # SENSOR_Object.df3.df.to_csv(DATA_PATH_SAVE_EXPORT+'Debug_df3_{model}.csv'.format(model=Model_Name), sep=';', na_rep = 0, header=SENSOR_Object.df3.df.columns.values,quotechar = '#')
             
             # # # lazy solution: drop redundant 'start' timestamp
-            # total_sensor_df.removeColumn_from_df('start')
-            # SENSOR_Object.removeSubset('start')   
-            
+            #total_sensor_df.removeColumn_from_df('start')
+            #SENSOR_Object.removeSubset('start')   
+            SENSOR_Object.df2.dropDuplicates_in_df('start')
+            SENSOR_Object.df3.dropDuplicates_in_df('start')
             
             # Update df   
-            intervals_df_all = SENSOR_Object.df2.df
-            intervals_df_export = SENSOR_Object.df3.df
-               
+            intervals_df_all = SENSOR_Object.df2.df.drop_duplicates()
+            intervals_df_export = SENSOR_Object.df3.df.drop_duplicates()
+            
+            total_sensor_df.removeColumn_from_df('start')
+            SENSOR_Object.removeSubset('start')   
+            
             # Get Columns and units (if given)  
             #sensor_columns = intervals_df_export.columns.values # .tolist()
             #sens_units = (SENSOR_Object.units[key] for key in sensor_columns if key in SENSOR_Object.units)
@@ -289,10 +319,8 @@ if __name__ == "__main__":
             plotTitle = "{Sensor_Name}, Model: {sensor_model}".format(Sensor_Name=Sensor_Name,sensor_model=Model_Name)
             create_plot(y, yunits=SENSOR_Object.signal_units_dict.get(SENSOR_Object.plotkey), title=plotTitle, ytitle=str(SENSOR_Object.plotkey))
             
-            total_sensor_df.dropDuplicates_in_df('start')
-            
-            total_df = total_sensor_df.df.join(intervals_df_export,lsuffix='_{}'.format(Model_Name),how='outer')
-            total_df.drop_duplicates()
+            total_df = total_sensor_df.df.join(intervals_df_export,rsuffix='_{}'.format(Model_Name),how='outer')
+            #total_df = total_df.drop_duplicates()
             #total_df = total_df.backfill().ffill()
             
             del(total_sensor_df)
