@@ -26,8 +26,9 @@ if __name__ == "__main__":
     ComPASV4_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/models_settings/ComPAS-V4_settings.ini")
     ComPASV5_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/models_settings/ComPAS-V5_settings.ini")
     PMSChinaSensor_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/models_settings/PMSChinaSensor_settings.ini")
+    MSPTI_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/models_settings/MSPTI_Settings.ini")
+    MINIPTI_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/models_settings/miniPTI_Settings.ini")     
     SMPS3080_Export_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/models_settings/SMPS3080_Export_Settings.ini")
-    
     SMPS3080_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/models_settings/SMPS3080_Settings.ini") # not implemented yet
     new_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/models_settings/new_config.ini") # not implemented yet
     
@@ -78,7 +79,11 @@ if __name__ == "__main__":
                         help="Path to SMPS settings (.ini) file ({} if omitted)".format(SMPS3080_Export_config_file))  
     parser.add_argument('--pms_config', required=False, dest='pms_ini', default=PMSChinaSensor_config_file,
                         help="Path to PMS China Sensor settings (.ini) file ({} if omitted)".format(PMSChinaSensor_config_file)) 
-    
+    parser.add_argument('--mspti_config', required=False, dest='mspti_ini', default=MSPTI_config_file,
+                        help="Path to MSPTI settings (.ini) file ({} if omitted)".format(MSPTI_config_file)) 
+    parser.add_argument('--minipti_config', required=False, dest='minipti_ini', default=MINIPTI_config_file,
+                        help="Path to miniPTI settings (.ini) file ({} if omitted)".format(MINIPTI_config_file)) 
+        
     args = parser.parse_args()
     
     # Check if any models were parsed as arguments
@@ -99,7 +104,7 @@ if __name__ == "__main__":
     elif args.SMPS3080:
         SMPS_Model = 'SMPS3080'
      
-    MSPTI_Model = 'MSPTI'
+    MSPTI_Model = 'MSPTI_Export'
     miniPTI_model = 'miniPTI'
     New_Model = 'New Model'
         
@@ -180,7 +185,7 @@ if __name__ == "__main__":
         FILE_EXT_ComPAS = '/models_settings/ComPASV4_sample.txt'
         FILE_EXT_SMPS = '/models_settings/SMPS3080_Export_sample.csv'
         FILE_EXT_MSPTI = '/models_settings/MSPTI_Export_sample.csv'
-        FILE_EXT_MINIPTI = '/models_settings/MiniPTI_Export_sample.csv'
+        FILE_EXT_MINIPTI = '/models_settings/miniPTI_Export_sample.csv'
         FILE_EXT_NEW = '/models_settings/new_sensor.csv'
      
     # Define new constants
@@ -237,13 +242,14 @@ if __name__ == "__main__":
                 Sensor_Config = args.compas_ini
             elif Model_Name in ['SMPS3080_Export','SMPS3080']:
                 Sensor_Config = args.smps_ini
-            elif Model_Name in 'MSPTI':
+            elif Model_Name in 'MSPTI_Export':
                 Sensor_Config = args.mspti_ini
             elif Model_Name in 'miniPTI':
                 Sensor_Config = args.minipti_ini
             else: # new model
                 Sensor_Config = None
-                
+             
+            
             if Sensor_Config != None:    
                 config.read(Sensor_Config)
                 
@@ -260,17 +266,30 @@ if __name__ == "__main__":
                 signal_units_dict = eval(config['GENERAL_SETTINGS']['signal_units_dict'])
                 other_dict = eval(config['GENERAL_SETTINGS']['other_dict'])
                 
-                SENSOR_Object = Sensor(Sensor_Name,Model_Name,Data_File,
-                                     header=header,header_export=header_export,signal_units_dict=signal_units_dict,other_dict=other_dict,
-                                     TimeColumn=TimeColumn,TimeFormat=TimeFormat,append_text=append_text,quotechar=quotechar,
-                                     separator=separator, skiprows=skiprows, plotkey=plotkey)
+                
+                
+                if TimeFormat in ['origin']:
+                    date_units = eval(config['GENERAL_SETTINGS']['date_units'])
+                    origin = eval(config['GENERAL_SETTINGS']['origin'])
+                    if origin == 'creation_day_of_file':
+                        origin = pd.to_datetime(datetime.fromtimestamp(os.path.getctime(Data_File)).strftime('%D'))
+                    SENSOR_Object = Sensor(Sensor_Name,Model_Name,Data_File,
+                                         header=header,header_export=header_export,signal_units_dict=signal_units_dict,other_dict=other_dict,
+                                         TimeColumn=TimeColumn,TimeFormat=TimeFormat,append_text=append_text,quotechar=quotechar,
+                                         separator=separator, skiprows=skiprows, plotkey=plotkey, date_units=date_units,origin=origin)
+                
+                else:
+                    SENSOR_Object = Sensor(Sensor_Name,Model_Name,Data_File,
+                                         header=header,header_export=header_export,signal_units_dict=signal_units_dict,other_dict=other_dict,
+                                         TimeColumn=TimeColumn,TimeFormat=TimeFormat,append_text=append_text,quotechar=quotechar,
+                                         separator=separator, skiprows=skiprows, plotkey=plotkey)
                 
             else: # new Model:
-                SENSOR_Object = Sensor(Sensor_Name,Model_Name,Data_File,skiprows=1,TimeFormat='Excel'
-                                     # header=header,header_export=header_export,signal_units_dict=signal_units_dict,other_dict=other_dict,
-                                     # TimeColumn=TimeColumn,TimeFormat=TimeFormat,append_text=append_text,quotechar=quotechar,
-                                     # separator=separator, plotkey=plotkey
-                                     )
+                skiprows = eval(config['GENERAL_SETTINGS']['NEW_SKIPROWS'])
+                TimeColumn = eval(config['GENERAL_SETTINGS']['TIME_COLUMN'])
+                TimeFormat = eval(config['GENERAL_SETTINGS']['TIME_FORMAT'])
+                SENSOR_Object = Sensor(Sensor_Name,Model_Name,Data_File, skiprows=skiprows,TimeColumn=TimeColumn,TimeFormat=TimeFormat)
+                                     
              
             # Calibrations and custom Scripts before
             SENSOR_Object = Check_Pre_Scripts(SENSOR_Object)
@@ -328,6 +347,7 @@ if __name__ == "__main__":
             
             
             # total_sensor_df.drop_duplicates_in_df()
+            
             # del(intervals_df_all)
             # del(intervals_df_export)
             # del(SENSOR_Object)

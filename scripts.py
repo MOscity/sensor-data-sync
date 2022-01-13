@@ -24,7 +24,7 @@ def Check_Pre_Scripts(SENSOR_Object):
         return SMPS3080_Exp_Pre_Script(SENSOR_Object)
     elif model_name == 'SMPS3080':
         return SMPS3080_Pre_Script(SENSOR_Object)
-    elif model_name == 'MSPTI':
+    elif model_name == 'MSPTI_Export':
         return MSPTI_Pre_Script(SENSOR_Object)
     elif model_name == 'miniPTI':
         return miniPTI_Pre_Script(SENSOR_Object)
@@ -47,7 +47,7 @@ def Check_Post_Scripts(SENSOR_Object):
         return SMPS3080_Exp_Post_Script(SENSOR_Object)
     elif model_name == 'SMPS3080':
         return SMPS3080_Post_Script(SENSOR_Object)
-    elif model_name == 'MSPTI':
+    elif model_name == 'MSPTI_Export':
         return MSPTI_Post_Script(SENSOR_Object)
     elif model_name == 'miniPTI':
         return miniPTI_Post_Script(SENSOR_Object)
@@ -86,13 +86,20 @@ def ComPASV4_Post_Script(SENSOR_Object):
     SENSOR_Object.Linear_Modify('Red A Mov. Avg [uPa]', A_Red,0)
     SENSOR_Object.Rename_sensor_signals('Red A Mov. Avg [uPa]', 'Red A Mov. Avg [Mm^-1]', 'Mm$^-1$') 
           
-    new_R1, new_Th1 = Amplitude_Phase(SENSOR_Object.df1, 'X1', 'Y1')
-    SENSOR_Object.addSubset(new_R1/214.7483648, 'R1', 'uPa') # Scale R to uPa
-    SENSOR_Object.addSubset(new_Th1, 'Theta1', 'deg') # Theta in deg
+    new_R1, new_Th1 = Amplitude_Phase(SENSOR_Object.df2, 'X1', 'Y1')
+    SENSOR_Object.addSubset(new_R1/214.7483648, 'R1', 'uPa', df_index = 2) # Scale R to uPa
+    SENSOR_Object.addSubset(new_Th1, 'Theta1', 'deg', df_index = 2) # Theta in deg
 
-    new_R2, new_Th2 = Amplitude_Phase(SENSOR_Object.df1, 'X2', 'Y2')
-    SENSOR_Object.addSubset(new_R2/214.7483648, 'R2', 'uPa') # Scale R to uPa
-    SENSOR_Object.addSubset(new_Th2, 'Theta2', 'deg') # Theta in deg
+    SENSOR_Object.addSubset(new_R1/214.7483648, 'R1', 'uPa', df_index = 3) # Scale R to uPa
+    SENSOR_Object.addSubset(new_Th1, 'Theta1', 'deg', df_index = 3) # Theta in deg
+
+    new_R2, new_Th2 = Amplitude_Phase(SENSOR_Object.df2, 'X2', 'Y2')
+    SENSOR_Object.addSubset(new_R2/214.7483648, 'R2', 'uPa', df_index = 2) # Scale R to uPa
+    SENSOR_Object.addSubset(new_Th2, 'Theta2', 'deg', df_index = 2) # Theta in deg
+    
+    new_R2, new_Th2 = Amplitude_Phase(SENSOR_Object.df2, 'X2', 'Y2')
+    SENSOR_Object.addSubset(new_R2/214.7483648, 'R2', 'uPa', df_index = 3) # Scale R to uPa
+    SENSOR_Object.addSubset(new_Th2, 'Theta2', 'deg', df_index = 3) # Theta in deg
     
     SENSOR_Object.plotkey = 'Blue A Mov. Avg [Mm^-1]'
     
