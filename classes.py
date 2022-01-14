@@ -1,5 +1,4 @@
 import pandas as pd
-# from functions import rename_key_in_dict
 
 def rename_key_in_dict(old_dict,old_name,new_name):
     """Replaces a key in a dictionary and returns a new dictionary.
@@ -96,14 +95,8 @@ class sensor_df(object):
         if len(self.df)>0:
             if len(self.df.get(column,[]))>0:
                 self.df.pop(column)  
-         
-    # def Exp_Modify_df(self, Column, A,B): # returns exp(a*col[i]+b)
-    #     self.df[Column] = np.exp(A*self.df[Column]+B)   
 
-    # def Amplitude_Phase(sensor_df,X_Column,Y_Column):    
-    #     new_R = pd.DataFrame({"R": np.sqrt(sensor_df.df[X_Column]**2+sensor_df.df[Y_Column]**2)},index=sensor_df.df.index)
-    #     new_Th = pd.DataFrame({"Theta": np.arctan2(sensor_df.df[Y_Column],sensor_df.df[X_Column])*180.0/np.pi},index=sensor_df.df.index)
-    #     return new_R, new_Th
+    
 class Sensor(object):
     _dfMax = 3
     def __init__(self, sensorname, model, datafile, header=None, header_export=None, signal_units_dict={}, other_dict={},TimeColumn=None,TimeFormat=None,append_text= '',quotechar = '"', separator=None,skiprows=0,plotkey='',origin=pd.to_datetime('1900/01/01'), date_units='s'):
@@ -186,7 +179,7 @@ class Sensor(object):
         self.datapath = datafile
         
         self.new_model = True   
-        if model in ['AE33','AE31','SMPS3080_Export','ComPAS-V4','PMS1']:
+        if model in ['AE33','AE31','SMPS3080_Export','ComPAS-V4','PMS1','MSPTI','miniPTI']:
             self.new_model = False
 
         header_out = header
@@ -202,7 +195,6 @@ class Sensor(object):
         quotechar_out= quotechar
         plotkey_out = plotkey
 
-        # if self.datapath[-3:] == 'csv': # for .csv
         self.df1 = sensor_df(pd.read_csv(
             datafile,                   # relative python path to subdirectory
             index_col = False,
@@ -213,19 +205,7 @@ class Sensor(object):
             engine = 'python'           # allows to use sep=None to find separator
             ))
             
-        # elif self.datapath[-4:] == 'xlsx': # for .xlsx
-        #     self.df1 = sensor_df(pd.read_excel(
-        #         datafile,                   # relative python path to subdirectory
-        #         #index_col = False,
-        #         dtype = {TimeColumn_out, float},
-        #         names = header_out,         # use names=None to infer column names
-        #         #separator = separator_out,        # Space-separated value file.
-        #         #quotechar = quotechar_out,  # double quote allowed as quote character
-        #         skiprows = skiprows_out,    # Skip the first X row of the file
-        #         #engine = 'openpyxl'           # allows to use sep=None to find separator
-        #         ))
-        
-        # If new sensor model, some columns could be empty
+
         if self.new_model:
             self.df1.removeColumn_from_df(' ')
             self.df1.removeColumn_from_df('  ')
@@ -265,7 +245,12 @@ class Sensor(object):
         if plotkey == '':
             plotkey_out = header_out[-1]
         
-
+        self.signals = header_out
+        self.mainsignals = header_export_out
+        self.signal_units_dict = signal_units_dict_out
+        self.other_dict = other_dict_out
+        self.plotkey = plotkey_out   
+        
         # If TimeColumn is None, use first column for timestamp.
         if TimeColumn == None:
             TimeColumn_out = header_out[0]
@@ -305,7 +290,6 @@ class Sensor(object):
             raise Exception("Type of TimeFormat has to be None or string.") 
             
             
-        
         if TimeFormat_out in ['Excel']:
             # Datetime format is given from excel (example 44544.42951 is 2021-Dec-14. 10:18:29.664)
             self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[TimeColumn_out], unit='D', origin=pd.to_datetime('1900/01/01'))
@@ -320,14 +304,7 @@ class Sensor(object):
             self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[TimeColumn_out], infer_datetime_format=True)
         
         self.df1.df = self.df1.df.set_index('Datetime')
-
-        
-        
-        self.signals = header_out
-        self.mainsignals = header_export_out
-        self.signal_units_dict = signal_units_dict_out
-        self.other_dict = other_dict_out
-        self.plotkey = plotkey_out    
+ 
 
     def getdf(self, df_index = 1):
         """returns the sensor_df of the selected dataframe.

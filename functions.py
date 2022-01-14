@@ -58,6 +58,48 @@ def my_days_format_function(x, pos=None):
 # def ExcelTime_to_Datetime(texc):
 #     return datetime.fromordinal(datetime(1900, 1, 1).toordinal() + texc - 2)
 
+def create_ini_file_from_dict(filepath,dictionary):
+    new_config_file = open(filepath, "w")
+    new_config_file.write("[GENERAL_SETTINGS]\n")
+    for key,value in dictionary.items():
+        if type(value) == list:
+            new_config_file.write(key + " : [" )
+            if type(value[0])==str:
+                for k in range(len(value)-1):
+                    new_config_file.write("'" + str(value[k]) + "',")
+                new_config_file.write("'" + str(value[-1]) + "']\n\n")
+            else:
+                for k in range(len(value)-1):
+                    new_config_file.write(str(value[k]) + ",")
+                new_config_file.write(str(value[-1]) + "]\n\n")               
+                
+        elif type(value) == dict:
+            new_config_file.write(key + " : {\t" )
+            
+            subvalues = list(value.values())
+            subkeys = list(value.keys())
+            
+            if len(subkeys)>0:
+                if type(subvalues[0])==str:
+                    new_config_file.write("'" + str(subkeys[0]) + "' : '" + str(subvalues[0]) + "',\n")
+                    for k in range(1,len(subvalues)-1):
+                        new_config_file.write("\t\t'" + str(subkeys[k]) + "' : '" + str(subvalues[k]) + "',\n")
+                    new_config_file.write("\t\t'" + str(subkeys[-1]) + "' : '" + str(subvalues[-1]) + "'\n\t}\n")
+                else:
+                    new_config_file.write("'" + str(subkeys[0]) + "' : " + str(subvalues[0]) + ",\n")
+                    for k in range(1,len(subvalues)-1):
+                        new_config_file.write("\t\t'" + str(subkeys[k]) + "' : " + str(subvalues[k]) + ",\n")
+                    new_config_file.write("\t\t'" + str(subkeys[-1]) + "' : " + str(subvalues[-1]) + "\n\t}\n")
+            else:
+                new_config_file.write("' ' : 0 }\n")
+        elif value == None: # value == None, int or float
+            new_config_file.write(key + " : None \n")
+        elif type(value) == str: # value == None, int or float
+            new_config_file.write(key + " : '" + str(value) + "'\n")
+        else: # value == int or float
+            new_config_file.write(key + " : " + str(value) + "\n")
+    new_config_file.close()                 
+ 
 
 
 def interval_rounder(t_mode,interval):

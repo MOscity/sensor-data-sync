@@ -27,7 +27,7 @@ if __name__ == "__main__":
     ComPASV5_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/models_settings/ComPAS-V5_settings.ini")
     PMSChinaSensor_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/models_settings/PMSChinaSensor_settings.ini")
     MSPTI_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/models_settings/MSPTI_Settings.ini")
-    MINIPTI_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/models_settings/miniPTI_Settings.ini")     
+    MINIPTI_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/models_settings/miniPTI_settings.ini")     
     SMPS3080_Export_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/models_settings/SMPS3080_Export_Settings.ini")
     SMPS3080_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/models_settings/SMPS3080_Settings.ini") # not implemented yet
     new_config_file = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0])) + "/models_settings/new_config.ini") # not implemented yet
@@ -120,6 +120,10 @@ if __name__ == "__main__":
         config = configparser.ConfigParser()
         config.read(config_file)
         
+        USE_NEW = eval(config['INIT_SETTINGS']['INIT_NEW_SENSOR'])
+        DATA_PATH_NEW   = eval(config['INIT_SETTINGS']['DATA_PATH_NEW']) + '/'
+        FILE_EXT_NEW   = eval(config['INIT_SETTINGS']['FILE_EXT_NEW']) 
+        
         FREQ = eval(config['GENERAL_SETTINGS']['FREQ'])
         MODE = eval(config['GENERAL_SETTINGS']['MODE'])
         
@@ -129,7 +133,6 @@ if __name__ == "__main__":
         USE_SMPS = eval(config['GENERAL_SETTINGS']['SMPS_Bool'])
         USE_MSPTI = eval(config['GENERAL_SETTINGS']['MSPTI_Bool'])
         USE_miniPTI = eval(config['GENERAL_SETTINGS']['miniPTI_Bool'])
-        USE_NEW = eval(config['GENERAL_SETTINGS']['NEW_Bool'])
         
         DATA_PATH_SAVE_EXPORT   = eval(config['GENERAL_SETTINGS']['DATA_PATH_SAVE_EXPORT']) + '/'
         FILE_EXT_SAVE_EXPORT   =  eval(config['GENERAL_SETTINGS']['FILE_EXT_SAVE_EXPORT'])
@@ -149,17 +152,17 @@ if __name__ == "__main__":
         DATA_PATH_MSPTI   = eval(config['GENERAL_SETTINGS']['DATA_PATH_MSPTI']) + '/'
         FILE_EXT_MSPTI   = eval(config['GENERAL_SETTINGS']['FILE_EXT_MSPTI'])
         
-        DATA_PATH_MINIPTI   = eval(config['GENERAL_SETTINGS']['DATA_PATH_MINIPTI']) + '/'
-        FILE_EXT_MINIPTI   = eval(config['GENERAL_SETTINGS']['FILE_EXT_MINIPTI'])
+        DATA_PATH_MINIPTI   = eval(config['GENERAL_SETTINGS']['DATA_PATH_miniPTI']) + '/'
+        FILE_EXT_MINIPTI   = eval(config['GENERAL_SETTINGS']['FILE_EXT_miniPTI'])
         
-        DATA_PATH_NEW   = eval(config['GENERAL_SETTINGS']['DATA_PATH_NEW']) + '/'
-        FILE_EXT_NEW   = eval(config['GENERAL_SETTINGS']['FILE_EXT_NEW'])
 
-
+        
     else: # Assume default values
         print ('Could not find the configuration file {0}'.format(config_file), file=sys.stderr)
         FREQ = 10
         MODE = 'min'
+
+        USE_NEW = False
         
         USE_AETH = True
         USE_PMS = True
@@ -167,7 +170,7 @@ if __name__ == "__main__":
         USE_SMPS = True
         USE_MSPTI = False
         USE_miniPTI = False
-        USE_NEW = False
+
         
         DATA_PATH_SAVE = default_dir
         DATA_PATH_AETH = default_dir
@@ -199,41 +202,45 @@ if __name__ == "__main__":
     miniPTI_File = DATA_PATH_MINIPTI+FILE_EXT_MINIPTI
     NEW_File = DATA_PATH_NEW+FILE_EXT_NEW
 
-    Bool_List = [USE_AETH, USE_PMS, USE_ComPAS, USE_SMPS, USE_MSPTI, USE_miniPTI, USE_NEW]
-    
-    Models_List = [AE_model, PMS_Model, ComPAS_model, SMPS_Model, MSPTI_Model, miniPTI_model, New_Model]
-    Full_Name_List = ['Aethalometer', 'PMS China Sensor', 'ComPAS', 'SMPS','MSPTI', 'miniPTI', 'mySensor']
-    Path_List = [AETH_File, PMS_File, ComPAS_File, SMPS_File, MSPTI_File, miniPTI_File, NEW_File]
+    if USE_NEW:
+                Bool_List = [True, False, False, False, False, False, False]
+    else:
+        Bool_List = [False, USE_AETH, USE_PMS, USE_ComPAS, USE_SMPS, USE_MSPTI, USE_miniPTI]
+        
+    Models_List = [New_Model, AE_model, PMS_Model, ComPAS_model, SMPS_Model, MSPTI_Model, miniPTI_model]
+    Full_Name_List = ['mySensor', 'Aethalometer', 'PMS China Sensor', 'ComPAS', 'SMPS','MSPTI', 'miniPTI']
+    Path_List = [NEW_File, AETH_File, PMS_File, ComPAS_File, SMPS_File, MSPTI_File, miniPTI_File]
     #Sensor_Config_List = []
-    
     
     total_df = pd.DataFrame()
     total_sensor_df = sensor_df(pd.DataFrame())
-    header_list = []
-    
-    print('------------------------')
-    print('Modus:\t\t\t', MODE)
-    print('Frequency:\t\t', FREQ)
-    print('USE_AETH:\t\t',USE_AETH)
-    print('USE_PMS:\t\t',USE_PMS)
-    print('USE_ComPAS:\t\t',USE_ComPAS)
-    print('USE_SMPS:\t\t',USE_SMPS)
-    print('USE_MSPTI:\t\t',USE_MSPTI)
-    print('USE_miniPTI:\t',USE_miniPTI)
-    print('USE_NEW:\t\t',USE_NEW)
-    
+        
+    print('------------------------', file=sys.stderr)
+    if USE_NEW:
+        print('USE_NEW:\t\t',USE_NEW, file=sys.stderr)
+        print('Initializing new sensor data...', file=sys.stderr)
+    else:
+        print('Modus:\t\t\t', MODE, file=sys.stderr)
+        print('Frequency:\t\t', FREQ, file=sys.stderr)
+        print('USE_AETH:\t\t',USE_AETH, file=sys.stderr)
+        print('USE_PMS:\t\t',USE_PMS, file=sys.stderr)
+        print('USE_ComPAS:\t\t',USE_ComPAS, file=sys.stderr)
+        print('USE_SMPS:\t\t',USE_SMPS, file=sys.stderr)
+        print('USE_MSPTI:\t\t',USE_MSPTI, file=sys.stderr)
+        print('USE_miniPTI:\t',USE_miniPTI, file=sys.stderr)
+
     sensor_counts = 0    
     
     for USE_ME,k in zip(Bool_List,range(len(Bool_List))):
         if USE_ME:
             sensor_counts += 1
             
-            print('------------------------')
+            
+            print('------------------------', file=sys.stderr)
             Sensor_Name = Full_Name_List[k]
             Model_Name = Models_List[k]
             Data_File = Path_List[k]            
-            print ("Reading {Sensor_Name} data, model {sensor_model}.".format(Sensor_Name=Sensor_Name, sensor_model=Model_Name), file=sys.stderr)
-            
+     
             if Model_Name in ['AE33', 'AE31']:
                 Sensor_Config = args.ae_ini
             elif Model_Name == 'PMS1':
@@ -248,10 +255,41 @@ if __name__ == "__main__":
                 Sensor_Config = args.minipti_ini
             else: # new model
                 Sensor_Config = None
-             
-            
+                skiprows = eval(config['INIT_SETTINGS']['NEW_SKIPROWS'])
+                TimeColumn = eval(config['INIT_SETTINGS']['TIME_COLUMN'])
+                TimeFormat = eval(config['INIT_SETTINGS']['TIME_FORMAT'])
+                separator = eval(config['INIT_SETTINGS']['NEW_SEPARATOR'])
+                Model_Name = eval(config['INIT_SETTINGS']['NEW_MODELNAME'])
+                
+                print ("Reading {Sensor_Name} data, model {sensor_model}.".format(Sensor_Name=Sensor_Name, sensor_model=Model_Name), file=sys.stderr)
+                 
+                SENSOR_Object = Sensor(Sensor_Name,Model_Name,Data_File, skiprows=skiprows,TimeColumn=TimeColumn,TimeFormat=TimeFormat)
+                header_out = list(SENSOR_Object.signals)
+                
+                create_ini_dict = {'model': Model_Name,
+                                  'separator' : separator,
+                                  'skiprows' : skiprows+1,
+                                  'TimeFormat' : TimeFormat,
+                                  'TimeColumn' : TimeColumn,
+                                  'append_text' : '',
+                                  'quotechar' : '"',
+                                  'plotkey' : header_out[-1],
+                                  'header' : header_out,
+                                  'header_export': header_out,
+                                  'signal_units_dict': SENSOR_Object.signal_units_dict,
+                                  'other_dict' : SENSOR_Object.other_dict
+                                  }
+                file_path_ini_out = "models_settings/{NewModel}_settings.ini".format(NewModel=Model_Name)
+                create_ini_file_from_dict(file_path_ini_out,create_ini_dict)
+                print ("Saved settings .ini file for model {sensor_model} in:\n {fpath}".format(sensor_model=Model_Name, fpath=default_dir+'/ \n'+file_path_ini_out), file=sys.stderr)
+           
+                del(SENSOR_Object)
+ 
+    
             if Sensor_Config != None:    
                 config.read(Sensor_Config)
+                print ("Reading {Sensor_Name} data, model {sensor_model}.".format(Sensor_Name=Sensor_Name, sensor_model=Model_Name), file=sys.stderr)
+                 
                 
                 separator = eval(config['GENERAL_SETTINGS']['separator'])
                 skiprows = eval(config['GENERAL_SETTINGS']['skiprows'])
@@ -265,7 +303,6 @@ if __name__ == "__main__":
                 header_export = eval(config['GENERAL_SETTINGS']['header_export'])
                 signal_units_dict = eval(config['GENERAL_SETTINGS']['signal_units_dict'])
                 other_dict = eval(config['GENERAL_SETTINGS']['other_dict'])
-                
                 
                 
                 if TimeFormat in ['origin']:
@@ -284,80 +321,76 @@ if __name__ == "__main__":
                                          TimeColumn=TimeColumn,TimeFormat=TimeFormat,append_text=append_text,quotechar=quotechar,
                                          separator=separator, skiprows=skiprows, plotkey=plotkey)
                 
-            else: # new Model:
-                skiprows = eval(config['GENERAL_SETTINGS']['NEW_SKIPROWS'])
-                TimeColumn = eval(config['GENERAL_SETTINGS']['TIME_COLUMN'])
-                TimeFormat = eval(config['GENERAL_SETTINGS']['TIME_FORMAT'])
-                SENSOR_Object = Sensor(Sensor_Name,Model_Name,Data_File, skiprows=skiprows,TimeColumn=TimeColumn,TimeFormat=TimeFormat)
-                                     
-             
-            # Calibrations and custom Scripts before
-            SENSOR_Object = Check_Pre_Scripts(SENSOR_Object)
-            
-            # Calculate averages:  
-            if args.CSV: # if CSV file is provided
-                intervals_df_all = calculate_intervals_csv(args.CSV, SENSOR_Object.df1.df,column=SENSOR_Object.signals)
-            else: # as config.ini or arguments given
-                intervals_df_all = calculate_intervals(SENSOR_Object.df1,freq=FREQ,mode=MODE,column=SENSOR_Object.signals,decimals=9)
-            
-            # Calculate averages:  
-            if args.CSV: # if CSV file is provided
-                intervals_df_export = calculate_intervals_csv(args.CSV, SENSOR_Object.df1.df,column=SENSOR_Object.mainsignals)
-            else: # as config.ini or arguments given
-                intervals_df_export = calculate_intervals(SENSOR_Object.df1,freq=FREQ,mode=MODE,column=SENSOR_Object.mainsignals,decimals=9)
-                                  
-            # replace df in object
-            SENSOR_Object.df2.df = intervals_df_all
-            SENSOR_Object.df3.df = intervals_df_export
-            
-            # Calibrations and custom Scripts after averaging 
-            SENSOR_Object = Check_Post_Scripts(SENSOR_Object)           
-            
-            # For Debug purposes
-            # SENSOR_Object.df3.df.to_csv(DATA_PATH_SAVE_EXPORT+'Debug_df3_{model}.csv'.format(model=Model_Name), sep=';', na_rep = 0, header=SENSOR_Object.df3.df.columns.values,quotechar = '#')
-            
-            # # # lazy solution: drop redundant 'start' timestamp
-            #total_sensor_df.removeColumn_from_df('start')
-            #SENSOR_Object.removeSubset('start')   
-            SENSOR_Object.df2.dropDuplicates_in_df('start')
-            SENSOR_Object.df3.dropDuplicates_in_df('start')
-            
-            # Update df   
-            intervals_df_all = SENSOR_Object.df2.df.drop_duplicates()
-            intervals_df_export = SENSOR_Object.df3.df.drop_duplicates()
-            
-            total_sensor_df.removeColumn_from_df('start')
-            SENSOR_Object.removeSubset('start')   
-            
-            # Get Columns and units (if given)  
-            #sensor_columns = intervals_df_export.columns.values # .tolist()
-            #sens_units = (SENSOR_Object.units[key] for key in sensor_columns if key in SENSOR_Object.units)
-            
-            # Make 1 Graph, defined per plotkey
-            y = intervals_df_export[SENSOR_Object.plotkey]
-            plotTitle = "{Sensor_Name}, Model: {sensor_model}".format(Sensor_Name=Sensor_Name,sensor_model=Model_Name)
-            create_plot(y, yunits=SENSOR_Object.signal_units_dict.get(SENSOR_Object.plotkey), title=plotTitle, ytitle=str(SENSOR_Object.plotkey))
-            
-            total_df = total_sensor_df.df.join(intervals_df_export,rsuffix='_{}'.format(Model_Name),how='outer')
-            #total_df = total_df.drop_duplicates()
-            #total_df = total_df.backfill().ffill()
-            
-            del(total_sensor_df)
-            total_sensor_df = sensor_df(total_df)
-            
-            
-            # total_sensor_df.drop_duplicates_in_df()
-            
-            # del(intervals_df_all)
-            # del(intervals_df_export)
-            # del(SENSOR_Object)
-            # del(total_df)
-            
+
+                # Calibrations and custom Scripts before
+                SENSOR_Object = Check_Pre_Scripts(SENSOR_Object)
+                
+                # Calculate averages:  
+                if args.CSV: # if CSV file is provided
+                    intervals_df_all = calculate_intervals_csv(args.CSV, SENSOR_Object.df1.df,column=SENSOR_Object.signals)
+                else: # as config.ini or arguments given
+                    intervals_df_all = calculate_intervals(SENSOR_Object.df1,freq=FREQ,mode=MODE,column=SENSOR_Object.signals,decimals=9)
+                
+                # Calculate averages:  
+                if args.CSV: # if CSV file is provided
+                    intervals_df_export = calculate_intervals_csv(args.CSV, SENSOR_Object.df1.df,column=SENSOR_Object.mainsignals)
+                else: # as config.ini or arguments given
+                    intervals_df_export = calculate_intervals(SENSOR_Object.df1,freq=FREQ,mode=MODE,column=SENSOR_Object.mainsignals,decimals=9)
+                                      
+                # replace df in object
+                SENSOR_Object.df2.df = intervals_df_all
+                SENSOR_Object.df3.df = intervals_df_export
+                
+                # Calibrations and custom Scripts after averaging 
+                SENSOR_Object = Check_Post_Scripts(SENSOR_Object)           
+                
+                # For Debug purposes
+                SENSOR_Object.df1.df.to_csv(DATA_PATH_SAVE_EXPORT+'Debug_df1_{model}_{number}.csv'.format(model=Model_Name,number=sensor_counts), sep=';', na_rep = 0, header=SENSOR_Object.df1.df.columns.values,quotechar = '#')
+                SENSOR_Object.df3.df.to_csv(DATA_PATH_SAVE_EXPORT+'Debug_df3_{model}_{number}.csv'.format(model=Model_Name,number=sensor_counts), sep=';', na_rep = 0, header=SENSOR_Object.df3.df.columns.values,quotechar = '#')
+                
+                # # # lazy solution: drop redundant 'start' timestamp
+                #total_sensor_df.removeColumn_from_df('start')
+                #SENSOR_Object.removeSubset('start')   
+                SENSOR_Object.df2.dropDuplicates_in_df('start')
+                SENSOR_Object.df3.dropDuplicates_in_df('start')
+                
+                # Update df   
+                intervals_df_all = SENSOR_Object.df2.df.drop_duplicates()
+                intervals_df_export = SENSOR_Object.df3.df.drop_duplicates()
+                
+                total_sensor_df.removeColumn_from_df('start')
+                SENSOR_Object.removeSubset('start')   
+                
+                # Get Columns and units (if given)  
+                #sensor_columns = intervals_df_export.columns.values # .tolist()
+                #sens_units = (SENSOR_Object.units[key] for key in sensor_columns if key in SENSOR_Object.units)
+                
+                # Make 1 Graph, defined per plotkey
+                y = intervals_df_export[SENSOR_Object.plotkey]
+                plotTitle = "{Sensor_Name}, Model: {sensor_model}".format(Sensor_Name=Sensor_Name,sensor_model=Model_Name)
+                create_plot(y, yunits=SENSOR_Object.signal_units_dict.get(SENSOR_Object.plotkey), title=plotTitle, ytitle=str(SENSOR_Object.plotkey))
+                
+                total_df = total_sensor_df.df.join(intervals_df_export,rsuffix='_{}'.format(Model_Name),how='outer')
+                #total_df = total_df.drop_duplicates()
+                #total_df = total_df.backfill().ffill()
+                
+                del(total_sensor_df)
+                total_sensor_df = sensor_df(total_df)
+                                
+                # total_sensor_df.drop_duplicates_in_df()
+                
+                del(intervals_df_all)
+                del(intervals_df_export)
+                del(SENSOR_Object)
+                del(total_df)
+
+
     # Save exports
-    total_sensor_df.df.to_csv(SAVE_PATH_EXPORT, sep=';', na_rep = 0,quotechar = '#')
+    if USE_NEW==False:
+        total_sensor_df.df.to_csv(SAVE_PATH_EXPORT, sep=';', na_rep = 0,quotechar = '#')
 
-
-print('Done')
+print('------------------------', file=sys.stderr)
+print('Done', file=sys.stderr)
 
 
             # # or

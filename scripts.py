@@ -78,13 +78,13 @@ def ComPASV4_Post_Script(SENSOR_Object):
     A_Red = 30.35/4.0
     
     SENSOR_Object.Linear_Modify('Blue A Mov. Avg [uPa]', A_Blue,0)
-    SENSOR_Object.Rename_sensor_signals('Blue A Mov. Avg [uPa]', 'Blue A Mov. Avg [Mm^-1]', 'Mm$^-1$')
+    SENSOR_Object.Rename_sensor_signals('Blue A Mov. Avg [uPa]', 'Blue 60s Mov. Avg', 'Mm$^-1$')
     
     SENSOR_Object.Linear_Modify('Green A Mov. Avg [uPa]', A_Green,0)
-    SENSOR_Object.Rename_sensor_signals('Green A Mov. Avg [uPa]', 'Green A Mov. Avg [Mm^-1]', 'Mm$^-1$')
+    SENSOR_Object.Rename_sensor_signals('Green A Mov. Avg [uPa]', 'Green 60s Mov. Avg', 'Mm$^-1$')
     
     SENSOR_Object.Linear_Modify('Red A Mov. Avg [uPa]', A_Red,0)
-    SENSOR_Object.Rename_sensor_signals('Red A Mov. Avg [uPa]', 'Red A Mov. Avg [Mm^-1]', 'Mm$^-1$') 
+    SENSOR_Object.Rename_sensor_signals('Red A Mov. Avg [uPa]', 'Red 60s Mov. Avg', 'Mm$^-1$') 
           
     new_R1, new_Th1 = Amplitude_Phase(SENSOR_Object.df2, 'X1', 'Y1')
     SENSOR_Object.addSubset(new_R1/214.7483648, 'R1', 'uPa', df_index = 2) # Scale R to uPa
@@ -101,7 +101,7 @@ def ComPASV4_Post_Script(SENSOR_Object):
     SENSOR_Object.addSubset(new_R2/214.7483648, 'R2', 'uPa', df_index = 3) # Scale R to uPa
     SENSOR_Object.addSubset(new_Th2, 'Theta2', 'deg', df_index = 3) # Theta in deg
     
-    SENSOR_Object.plotkey = 'Blue A Mov. Avg [Mm^-1]'
+    SENSOR_Object.plotkey = 'Blue 60s Mov. Avg'
     
     return SENSOR_Object
 
