@@ -142,6 +142,7 @@ def MSPTI_Post_Script(SENSOR_Object):
     return SENSOR_Object
 
 def miniPTI_Pre_Script(SENSOR_Object):
+    SENSOR_Object.Rename_sensor_signals('60s Ernest new (V)', '60s Ernest new (arb)')
     return SENSOR_Object
 
 def miniPTI_Post_Script(SENSOR_Object):

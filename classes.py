@@ -31,12 +31,20 @@ class sensor_df(object):
         """
         self.df = df
         
-    def getSubset_df(self, start, end, columns):
+    def getSubset_df(self, start, end, columns_export=-1):
         """returns the panda dataframe subset of the given columns.
             start = start datetime (pd.datetime)
             end = end datetime (pd.datetime)
-            columns = columns to export (str)"""
-        return self.df.loc[pd.to_datetime(start):pd.to_datetime(end), columns]
+            columns_export = columns to export (str)
+                        -1 = all columns (default)"""
+        if columns_export==-1:
+            columns_export = self.df.columns.values.tolist().copy()
+        column_names = self.df.columns.values.tolist().copy()
+        existing_column_names = []
+        for entry_ind in range(len(column_names)):
+            if columns_export.count(column_names[entry_ind])>0:
+                existing_column_names.append(column_names[entry_ind])
+        return self.df.loc[pd.to_datetime(start):pd.to_datetime(end), existing_column_names]
    
     def dropDuplicates_in_df(self, column_to_check):  
         """Drops duplicate entries in the given column in this dataframe.
@@ -47,9 +55,9 @@ class sensor_df(object):
         """Linear modification of the given column in this dataframe.
             Column = column to modify (str)
             col_new[i] = A*col[i]+B"""
-        column_names = self.df.columns.values.tolist()
+        column_names = self.df.columns.values.tolist().copy()
         if column_names.count(Column)>0:
-            self.df[Column] = A*self.df[Column]+B
+            self.df[Column] = A*self.df[Column].astype(float)+B
         else:
             raise Exception("There is no column named {col}".format(col=Column))
         
@@ -60,26 +68,16 @@ class sensor_df(object):
                     e.g. a_n = a_n=[0,1] for Linear Modification
             col_new[i] = a[n]*col[i]**n + a[n-1]*col[i]**(n-1) + ... 
             ... + a[1]*col[i] + a[0]"""
-        column_names = self.df.columns.values.tolist()
+        column_names = self.df.columns.values.tolist().copy()
         if column_names.count(Column)>0:
             self.df['NPoly_Column'] = a_n[0]
             for k in range(1,len(a_n)):
-                self.df['NPoly_Column'] += a_n[k]*self.df[Column]**k
-                print('a_n[k] =', a_n[k], ' at k=',k)
+                self.df['NPoly_Column'] += a_n[k]*self.df[Column].astype(float)**k
+                #print('a_n[k] =', a_n[k], ' at k=',k)
             self.df[Column] = self.df['NPoly_Column']
             self.df.pop('NPoly_Column')
         else:
             raise Exception("There is no column named {col}".format(col=Column))
-        
-    def Rename_df_Column(self, old_name, new_name):
-        """Rename a column of this dataframe, if present.
-            old_name = column/signal to modify (str)
-            new_name = new name (str)"""
-        column_names = self.df.columns.values.tolist()
-        if column_names.count(old_name)>0:
-            pos_df = column_names.index(old_name)
-            column_names[pos_df] = new_name     
-        self.df.columns = column_names
             
     def addSubset_to_df(self, df_other, new_name = 'New List'):
         """Adds a dataframe (to the right) to this dataframe.
@@ -88,7 +86,18 @@ class sensor_df(object):
         given_name = df_other.columns[-1]       
         self.df.join(df_other)
         self.Rename_df_Column(given_name, new_name)
-        
+                
+    def Rename_df_Column(self, old_name, new_name):
+        """Rename a column of this dataframe, if present.
+            old_name = column/signal to modify (str)
+            new_name = new name (str)"""
+        column_names = self.df.columns.values.tolist().copy()
+        if column_names.count(old_name)>0:
+            pos_df = column_names.index(old_name)
+            column_names[pos_df] = new_name     
+        self.df.columns = column_names
+            
+
     def removeColumn_from_df(self,column):
         """Removes the given column in this dataframe, if present.
             column = column name (string)"""
@@ -96,7 +105,31 @@ class sensor_df(object):
             if len(self.df.get(column,[]))>0:
                 self.df.pop(column)  
 
+    def check_badword_in_df(self,badword,column, offset_start_index=0, offset_end_index=0):
+        """Removes all rows which contain 'badword' from this dataframe by checking all elements of column.
+            badword = word to search in column
+            column = column name (string)
+            offset_start_index = start row index (optional)
+            offset_end_index = end row index (optional)"""
+        Occurence = False
+        for k in range(offset_start_index,len(self.df[column])-offset_end_index):
+            if self.df[column][k].find(badword)>=0:
+                print('Warning: Removed row {row_k} due to corrupt data'.format(row_k=k))
+                Occurence = True
+                self.df.drop(labels=k,axis=0,inplace=True)
+        return Occurence
     
+    def removeEmptyColumns_in_df(self):
+        """Removes all columns with only NaN-values from this dataframe.
+            """
+        column_names = self.df.columns.values.tolist().copy()
+        for k in range(len(column_names)):
+            column_last = column_names[len(column_names)-1-k]
+            if self.df[column_last].isnull().all() == True:
+                print('Warning: Removed empty column "{column}"'.format(column=column_last))
+                self.removeColumn_from_df(column_last)
+     
+                
 class Sensor(object):
     _dfMax = 3
     def __init__(self, sensorname, model, datafile, header=None, header_export=None, signal_units_dict={}, other_dict={},TimeColumn=None,TimeFormat=None,append_text= '',quotechar = '"', separator=None,skiprows=0,plotkey='',origin=pd.to_datetime('1900/01/01'), date_units='s'):
@@ -109,12 +142,11 @@ class Sensor(object):
             
             self.modelname :        model (str), see "model"_settings.ini files
             self.datapath :         path to datafiles (str), see config.ini file
-            self.new_model :        False if found in model list, else True
             self.df1, 
             self.df2, 
             self.df3 :              3 panda dataframes with extended functions
             self.signals :          header list (overrides found header in file if provided)
-            self.mainsignals :      signals to export (from self.signals)
+            self.signals_export :   signals to export (from self.signals)
             self.signal_units_dict: signal units dictionary for any/all elements of self.signals
             self.other_dict :       other dictionary for any/all elements 
                                     of self.signals (e.g. wavelengths dictionary)
@@ -125,11 +157,11 @@ class Sensor(object):
             sensorname :            Any name for your sensor (str)
             model :                 Model name of your sensor (str).
                                     Currently Supported: AE33, AE31, SMPS3080_Export, ComPAS-V4, PMS1
-                                    Any other name will be registered as 'new model'.
-            datafile :              data path (str)
+                                    MSPTI, miniPTI
+                                    Any other name can be used for initializing new datasets.
+            datafile :              valid data path (str)
             header = [] :           Override header row, length must match with columns. 
                                     If header is None, first row will be used as column names.
-                         
             header_export = [] :    list for signals to export.
                                     if header_export is None, header_export = header
             signal_units_dict = {}: dictionary for units of signals.
@@ -141,7 +173,7 @@ class Sensor(object):
             # 
             # TimeFormat:           Devices, Comments:
             # 'Excel'               --> SMPS
-            # 'DateTime_1Column'    --> ComPAS, PMS ChinaSensor
+            # 'DateTime_1Column'    --> ComPAS, PMS ChinaSensor, miniPTI, MSPTI
             # 'DateTime_2Column'    --> Aethalometer
             # 'origin'              --> provide custom origin with pandas datetime, 
             #                           e.g. pd.datetime('1900/01/01')
@@ -178,23 +210,25 @@ class Sensor(object):
         self.modelname = model
         self.datapath = datafile
         
-        self.new_model = True   
-        if model in ['AE33','AE31','SMPS3080_Export','ComPAS-V4','PMS1','MSPTI','miniPTI']:
-            self.new_model = False
-
         header_out = header
         separator_out = separator
         skiprows_out = skiprows
         
+        # if header is not provided, first row will be used as header
+        # else skip one more row
+        if header_out != None:
+            skiprows_out += 1
+            
         #header_export_out = header_export
         signal_units_dict_out = signal_units_dict
         other_dict_out = other_dict
-        TimeColumn_out = TimeColumn
+        #TimeColumn_out = TimeColumn
         #TimeFormat_out = TimeFormat
         append_text_out = append_text
         quotechar_out= quotechar
         plotkey_out = plotkey
 
+        # Init main sensor dataframe
         self.df1 = sensor_df(pd.read_csv(
             datafile,                   # relative python path to subdirectory
             index_col = False,
@@ -205,18 +239,20 @@ class Sensor(object):
             engine = 'python'           # allows to use sep=None to find separator
             ))
             
-
-        if self.new_model:
-            self.df1.removeColumn_from_df(' ')
-            self.df1.removeColumn_from_df('  ')
-            self.df1.removeColumn_from_df('   ')
+        # # Remove empty columns ... maybe dangerous to do...
+        self.df1.removeEmptyColumns_in_df()
+        self.df1.removeColumn_from_df(' ')
+        self.df1.removeColumn_from_df('  ')
+        self.df1.removeColumn_from_df('   ')
             
+        # Init more sensor dataframes
         self.df2 = sensor_df(pd.DataFrame())
         self.df3 = sensor_df(pd.DataFrame())
        
         # If no header is provided, use first row as header
         if header_out == None:
             header_out = self.df1.df.columns.to_list()
+
         # If a header is provided, check if type is list and if length matches with number of columns
         elif type(header_out)==list:  
             current_header_len = len(self.df1.df.columns.to_list())
@@ -237,16 +273,29 @@ class Sensor(object):
           
             
         # If no signal units are provided, create a dictionary with header as keys and empty values
-        if len(signal_units_dict_out.items())==0:
+        if signal_units_dict == None:
             signal_units_dict_out = dict.fromkeys(header_out,'')
-            
-            
-        # If no plotkey is provided, use last column for plots
-        if plotkey == '':
-            plotkey_out = header_out[-1]
+        # if dict is not None but empty ({}) we can access .items():
+        elif len(signal_units_dict_out.items())==0:
+            signal_units_dict_out = dict.fromkeys(header_out,'')
+ 
+    
+        # If other dict is None, use empty dictionary
+        if other_dict == None:
+            other_dict_out = {}
         
+        # If no plotkey is provided, use last column for plots
+        
+        if plotkey == '': #or header_out.count(plotkey)==0:
+            plotkey_out = header_out[-1]
+        # or if plotkey is not in signals list, use last column for plots
+        elif header_out.count(plotkey)==0:
+            print('There is no plotkey named {pkey}'.format(pkey=plotkey))
+            plotkey_out = header_out[-1]
+            
+            
         self.signals = header_out
-        self.mainsignals = header_export_out
+        self.signals_export = header_export_out
         self.signal_units_dict = signal_units_dict_out
         self.other_dict = other_dict_out
         self.plotkey = plotkey_out   
@@ -289,18 +338,26 @@ class Sensor(object):
         else:
             raise Exception("Type of TimeFormat has to be None or string.") 
             
-            
-        if TimeFormat_out in ['Excel']:
+        # Check if there is a row containing header again:
+        corrupted = self.df1.check_badword_in_df(TimeColumn_out,TimeColumn_out,offset_start_index=1)
+        if corrupted:
+            for key in header_out:
+                if (key != TimeColumn_out) or (key != DateColumn_out):
+                    self.df1.df[key] = self.df1.df[key].astype(float)
+
+        if TimeFormat_out == None: # if TimeFormat = None,: infer date time
+            self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[TimeColumn_out], infer_datetime_format=True)
+        elif TimeFormat_out in ['Excel']:
             # Datetime format is given from excel (example 44544.42951 is 2021-Dec-14. 10:18:29.664)
             self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[TimeColumn_out], unit='D', origin=pd.to_datetime('1900/01/01'))
             self.df1.df['Datetime'] = pd.to_datetime(self.df1.df['Datetime']) - pd.to_timedelta(2, unit='D') # subtract 2 additional days 
         elif TimeFormat_out in ['DateTime_2Column']:
             self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[DateColumn_out] + " " + self.df1.df[TimeColumn_out], infer_datetime_format=True)
-
         elif TimeFormat_out in ['origin']:
             self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[TimeColumn_out], unit=date_units, origin=origin)
-
-        else: # if TimeFormat = None, or 'DateTime_1Column' : infer date time
+        elif TimeFormat_out[:9] == 'Format = ':
+            self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[TimeColumn_out], infer_datetime_format=False, format=TimeFormat_out[9:] )
+        else: # if 'DateTime_1Column' : infer date time
             self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[TimeColumn_out], infer_datetime_format=True)
         
         self.df1.df = self.df1.df.set_index('Datetime')
@@ -340,27 +397,33 @@ class Sensor(object):
             self.getdf(df_index).Rename_df_Column(old_name, new_name)
             
         # Check in signals:
-        if self.signals.count(old_name)>0:
-            pos_signals = self.signals.index(old_name)
-            self.signals[pos_signals] = new_name
+        new_signals = self.signals.copy()
+        if new_signals.count(old_name)>0:
+            pos_signals = new_signals.index(old_name)
+            new_signals[pos_signals] = new_name
+        self.signals = new_signals
             
-        # Check in mainsignals:
-        if self.mainsignals.count(old_name)>0:
-            pos_mainsignals = self.mainsignals.index(old_name)
-            self.mainsignals[pos_mainsignals] = new_name   
-
+        # Check in signals_export:
+        new_export_signals = self.signals_export.copy()
+        if new_export_signals.count(old_name)>0:
+            pos_signals_export = new_export_signals.index(old_name)
+            new_export_signals[pos_signals_export] = new_name   
+        self.signals_export = new_export_signals
+        
         # Check in signal_units_dict:
-        units_keys = list(self.signal_units_dict.keys())
+        new_signal_dict = self.signal_units_dict.copy()
+        units_keys = list(new_signal_dict.keys())
         if units_keys.count(old_name)>0: 
             if new_units!=False:
-                self.signal_units_dict[old_name] = new_units
-            self.signal_units_dict = rename_key_in_dict(self.signal_units_dict,old_name,new_name)    
+                new_signal_dict[old_name] = new_units
+            self.signal_units_dict = rename_key_in_dict(new_signal_dict,old_name,new_name)    
             
         # Check in other_dict:
-        other_keys = list(self.other_dict.keys())
+        new_other_dict = self.other_dict.copy()
+        other_keys = list(new_other_dict.keys())
         if other_keys.count(old_name)>0: 
-            self.other_dict[old_name] = new_units
-            self.other_dict = rename_key_in_dict(self.other_dict,old_name,new_name)  
+            new_other_dict[old_name] = new_units
+            self.other_dict = rename_key_in_dict(new_other_dict,old_name,new_name)  
             
         # Check in plotkey
         if self.plotkey == old_name:
@@ -373,10 +436,19 @@ class Sensor(object):
             new_units = new units for sensor object
             df_index = 1,2,3, or -1(=all, default)"""
             
-        given_name = df_other.columns[-1]       
-        self.signals.append(given_name)
-        self.mainsignals.append(given_name)
-        self.signal_units_dict.update({given_name: new_units})
+        given_name = df_other.columns[-1]  
+        
+        signal_names = self.signals.copy()
+        signal_names.append(given_name)
+        self.signals = signal_names
+        
+        export_signals = self.signals_export.copy()
+        export_signals.append(given_name)
+        self.signals_export = export_signals
+        
+        dictionary = self.signal_units_dict.copy()
+        dictionary.update({given_name: new_units})
+        self.signal_units_dict = dictionary
         
         if df_index == -1:
             for i in range(self._dfMax):
@@ -390,19 +462,28 @@ class Sensor(object):
         """Removes the given column from one/all sensor dataframes.
             column = column name (string)
             df_index = 1,2,3, or -1(=all, default)"""
-        if self.signals.count(column)>0:
-            self.signals.remove(column)
             
-        if self.mainsignals.count(column)>0:
-            self.mainsignals.remove(column)
+        new_signals = self.signals.copy()
+        if new_signals.count(column)>0:
+            new_signals.remove(column)
+        self.signals = new_signals
             
-        if len(self.signal_units_dict)>0:
-            if len(self.signal_units_dict.get(column,[]))>0:
-                self.signal_units_dict.pop(column)
-                
-        if len(self.other_dict)>0:
-            if len(self.other_dict.get(column,[]))>0:
-                self.other_dict.pop(column)     
+        new_signals_export = self.signals_export.copy()
+        if new_signals_export.count(column)>0:
+            new_signals_export.remove(column)
+        self.signals_export = new_signals_export
+        
+        new_signals_dict = self.signal_units_dict.copy()
+        if len(new_signals_dict)>0:
+            if len(new_signals_dict.get(column,[]))>0:
+                new_signals_dict.pop(column)
+        self.signal_units_dict = new_signals_dict
+        
+        new_other_dict = self.other_dict.copy()
+        if len(new_other_dict)>0:
+            if len(new_other_dict.get(column,[]))>0:
+                new_other_dict.pop(column)     
+        self.other_dict = new_other_dict
                 
         if df_index == -1:
             for i in range(self._dfMax):

@@ -71,8 +71,7 @@ def create_ini_file_from_dict(filepath,dictionary):
             else:
                 for k in range(len(value)-1):
                     new_config_file.write(str(value[k]) + ",")
-                new_config_file.write(str(value[-1]) + "]\n\n")               
-                
+                new_config_file.write(str(value[-1]) + "]\n\n")                              
         elif type(value) == dict:
             new_config_file.write(key + " : {\t" )
             
@@ -96,7 +95,7 @@ def create_ini_file_from_dict(filepath,dictionary):
             new_config_file.write(key + " : None \n")
         elif type(value) == str: # value == None, int or float
             new_config_file.write(key + " : '" + str(value) + "'\n")
-        else: # value == int or float
+        else: # value == int or float or bool
             new_config_file.write(key + " : " + str(value) + "\n")
     new_config_file.close()                 
  
@@ -231,25 +230,26 @@ def calculate_intervals(dataframe, freq = 1, mode = 'min', decimals = 0, column=
         
     tmin = time_rounder((dataframe.df.first_valid_index()),freq,mode)
     tmax = time_rounder((dataframe.df.last_valid_index()),freq,mode) - dt_0
-    
     for dt in rrule.rrule(ruler, interval = freq, dtstart=tmin, until=tmax):
         start = dt
         end = dt+dt_0
         subset = dataframe.getSubset_df(start, end, column)
         
+        #print(len(subset))
+        indie = 0
+        myBool = True
         if fill_nonempty: # if subset is empty roll back in time to get last non-zero subset
-            k = 0
-            while len(subset)==0: 
-                subset = dataframe.getSubset_df(start-timedelta(minutes=k),end, column)
-                k+=1
-                if k > 10000: # stop if k is too large
-                    continue
-        
+            while myBool: 
+                subset = dataframe.getSubset_df(start-timedelta(minutes=indie),end, column)
+                indie+=1
+                #print('Start_Time = ', start-timedelta(minutes=indie))
+                myBool = (len(subset)==0 and indie<=1000)
         index = len(df)
         df.loc[index, 'start'] = start
         df.loc[index, 'end'] = end
 
         columns_dict = dict(subset.mean(numeric_only=True))
+        
         for key, value in columns_dict.items():
             df.loc[index, key] = round(value,decimals)
     df = df.set_index('end')
