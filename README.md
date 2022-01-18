@@ -146,7 +146,7 @@ File extensions with for example 'AE33_AE33*' will use all datas starting with '
 Model Settings directory is in the same directory as this script and should not be moved.     
 Save new model settings in that directory and provide a valid path for SETTINGS_SENSOR_i (see other models as example).    
 
-### b.) Run main.py
+### b.) Run main.py  
 Run main.py with optional arguments     
 
 - '--inifile' :     
@@ -155,13 +155,13 @@ Path to configuration (.ini) file. "default-directory"/config.ini if omitted
 - '--intervals' :     
 csv file with start and end timestamps columns. First row must be the column names (i.e. "start" and "end").      
 Uses intervals as defined in config.ini if this argument is not provided.     
-Uses 10 minute intervals if this argument is missing and config.ini is missing too.
+Uses 10 minute intervals if this argument is missing and config.ini is missing too.  
 
-## 3.) Create Custom Scripts (optional)
-If you like to use python library for data processing instead for example excel.        
-Write your custom python scripts for pre- or post-processing of the data (before or after average).   
+## 3.) Create Custom Scripts (optional)  
+If you like to use python library for data processing (instead of Excel, R, MatLab or similar),          
+you can write your own python scripts for pre- or post-processing of the data (before or after the averaging).   
 
-### a.) Add your model to the functions Check_Pre_Scripts and Check_Post_Scripts        
+### a.) Add your model to the functions Check_Pre_Scripts and Check_Post_Scripts in scripts.py       
 Open scripts.py and add your model name to the list of Check_Pre_Scripts and Check_Post_Scripts.        
 'myNewModel' has to match exactly the 'model' name defined in /models_settings/myModel_settings.ini.   
 
@@ -176,9 +176,9 @@ in Check_Post_Scripts add the lines (in between the other elif-statements):
         
         
 ### b.) Write your own Scripts  
-Open scripts.py and define the functions 'myNewModel'_Pre_Script and _Post_Script: 
+Open scripts.py and define the functions 'myNewModel'_Pre_Script and 'myNewModel'_Post_Script:  
 
-for example:  
+for example:   
 > def myNewModel_Pre_Script(SENSOR_Object):  
 > return SENSOR_Object    
     
