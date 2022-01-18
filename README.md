@@ -23,20 +23,25 @@ ID Name to recognize the model
 Provide valid data path for input datas   
 
 - SKIPROWS_NEW    
-Skip rows before header (important to set correctly!) 
+Skip rows before header (important to set correctly!).
 
 - SEPARATOR_NEW     
 Separator in the dataset, use None to interpret datas with python-interpreter 
 or "," , "\t", ";", " " ... 
 
-
 - TIME_FORMAT_NEW       
-Time_Format: Allowed Formats: 'Excel', 'DateTime_1Column', 'DateTime_2Column', 'origin', 'Format = <>'. 
-See also help(SENSOR_Object). 
+Time Format for the time datas.   
+Allowed Formats: None, 'Excel', 'DateTime_1Column', 'DateTime_2Column', 'origin' or 'Format = <>'.  
+For example: 'Format = %%d.%%m.%%Y %%H:%%M:%%S' for 30.12.2021 15:45:10.  
+Or 'Format = %%d/%%m/%%Y”, note that “%%f” will parse all the way up to nanoseconds.    
+Note that in this .ini file one must write '%%' instead of '%'.   
+See strftime documentation for more information on choices:   
+https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior.   
+See also help(SENSOR_Object).   
 
 - TIME_COLUMN_NEW       
-Time Column has to match with the name of the time/index column. 
-
+Column name with the time units. Use None to use first column.   
+If provided, use exact name of the time/index column. 
 
 ### b.) Run main.py
 
@@ -52,35 +57,35 @@ Separator in the dataset, use None to interpret datas with python-interpreter
 or "," , "\t", ";", " " ...   
 
 - skiprows : 2      
-Number of rows to skip before first row of datas / header.      
+Skip rows before header / first row of datas.
+If a header is provided (!=None), one additional line will be skipped.
 
 - TimeFormat : 'Format = %%d.%%m.%%Y %%H:%%M:%%S'       
-Time Format for the time datas.   
-'Excel', 'DateTime_1Column', 'DateTime_2Column', 'origin', 'Format = <>'.     
-See also help(SENSOR_Object).   
+Time Format for the time datas. See above.
 
-- TimeColumn : None     
-Column name with the time units. Use None to use first column.     
+- TimeColumn : ''    
+Column name with the time units. Use None to use first column.   
+If provided, use exact name of the time/index column. 
 
 - append_text : ''      
-not yet implemented feature.    
+Not yet implemented feature.    
 
 - quotechar : '"'     
-char used for quotations in the datafile.     
+Character used for quotations in the datafile.     
 
 - plotkey : ''      
 Column for preview plot. Use '' or None to use last column.     
 
-- header : None     
+- header : []     
 Overwrite header in the datafile. Use None to interpret first row as header.    
 
-- header_export : None    
+- header_export : []    
 Signals to export. If None, header_export = header.    
 
-- signal_units_dict : None    
+- signal_units_dict : {}   
 Dictionary for the units of the signals/columns. Use None for no units.     
 
-- other_dict : None     
+- other_dict : {}     
 Additional dictionary, for example wavelengths for some signals.    
 
 
