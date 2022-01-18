@@ -1,17 +1,4 @@
-# import configparser, argparse # for argument parsing
-# from dateutil.parser import parse
-# import sys, time, os, glob
-
-from dateutil import rrule
-from datetime import datetime, timedelta
-
-import pandas as pd
-from pandas.plotting import register_matplotlib_converters
-
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-from matplotlib.ticker import FuncFormatter
-
+from lib import rrule, timedelta, pd, register_matplotlib_converters, plt, mdates, FuncFormatter
 
 def my_date_formater(ax, delta):
     if delta.days < 3:
@@ -212,6 +199,9 @@ def calculate_intervals_csv(intervalfile, df_origin, decimals = 0 ,column=0):
 
 
 def calculate_intervals(dataframe, freq = 1, mode = 'min', decimals = 0, column=0, fill_nonempty=True ): 
+    """Averages a dataframe and returns new dataframe with equidistant time intervals of <freq> <mode>.
+        """
+        
     # Frequency is averaging interval in units of 'sec', 'min' or 'hours'
     df = pd.DataFrame(columns=['start','end'])
     
@@ -237,13 +227,10 @@ def calculate_intervals(dataframe, freq = 1, mode = 'min', decimals = 0, column=
         
         #print(len(subset))
         indie = 0
-        myBool = True
         if fill_nonempty: # if subset is empty roll back in time to get last non-zero subset
-            while myBool: 
+            while (len(subset)==0 and indie<=1000): 
                 subset = dataframe.getSubset_df(start-timedelta(minutes=indie),end, column)
                 indie+=1
-                #print('Start_Time = ', start-timedelta(minutes=indie))
-                myBool = (len(subset)==0 and indie<=1000)
         index = len(df)
         df.loc[index, 'start'] = start
         df.loc[index, 'end'] = end
