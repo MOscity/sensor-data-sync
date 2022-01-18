@@ -1,6 +1,7 @@
 # sensor-data-sync
 Processes and time-synchronizes several sensor datas with custom scripts.   
-Work in Progres...  
+
+>> Work in progress...  
 
 ## Systems and Packages required
 Python 3.6+,
