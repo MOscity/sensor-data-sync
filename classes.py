@@ -144,9 +144,9 @@ class Sensor(object):
             
             self.modelname :        model (str), see "model"_settings.ini files
             self.datapath :         path to datafiles (str), see config.ini file
-            self.df1, 
-            self.df2, 
-            self.df3 :              3 panda dataframes with extended functions
+            self.df1,               panda dataframe for all datas and all columns
+            self.df2,               panda dataframe for averaged datas and all columns
+            self.df3 :              panda dataframe for averaged datas and export columns
             self.signals :          header list (overrides found header in file if provided)
             self.signals_export :   signals to export (from self.signals)
             self.signal_units_dict: signal units dictionary for any/all elements of self.signals
