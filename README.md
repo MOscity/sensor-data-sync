@@ -26,7 +26,9 @@ Provide valid data path for input datas
 Skip rows before header (important to set correctly!) 
 
 - SEPARATOR_NEW     
-Separator : "," , "\t", ";", " " ... or set to None to read first row (=NEW_SKIPROWS+1) as header row 
+Separator in the dataset, use None to interpret datas with python-interpreter 
+or "," , "\t", ";", " " ... 
+
 
 - TIME_FORMAT_NEW       
 Time_Format: Allowed Formats: 'Excel', 'DateTime_1Column', 'DateTime_2Column', 'origin', 'Format = <>'. 
@@ -43,10 +45,11 @@ Time Column has to match with the name of the time/index column.
 See output file 'myModel'_settings.ini in the directory /models_settings/:
 
 - model : 'myModel'     
-ID Name to recognize the model      
+ID Name to recognize the model.        
 
 - separator : None      
-separator in the dataset, use None to interpret datas with python-interpreter or ',' , '\t', ';' etc.       
+Separator in the dataset, use None to interpret datas with python-interpreter   
+or "," , "\t", ";", " " ...   
 
 - skiprows : 2      
 Number of rows to skip before first row of datas / header.      
@@ -57,7 +60,7 @@ Time Format for the time datas.
 See also help(SENSOR_Object).   
 
 - TimeColumn : None     
-Column name with the time units. Use None to use first column     
+Column name with the time units. Use None to use first column.     
 
 - append_text : ''      
 not yet implemented feature.    
@@ -72,7 +75,7 @@ Column for preview plot. Use '' or None to use last column.
 Overwrite header in the datafile. Use None to interpret first row as header.    
 
 - header_export : None    
-Signals to export. If None, header_export = header    
+Signals to export. If None, header_export = header.    
 
 - signal_units_dict : None    
 Dictionary for the units of the signals/columns. Use None for no units.     
