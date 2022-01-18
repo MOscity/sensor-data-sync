@@ -163,14 +163,14 @@ Write your custom python scripts for pre- or post-processing of the data (before
 
 ### a.) Add your model to the functions Check_Pre_Scripts and Check_Post_Scripts        
 Open scripts.py and add your model name to the list of Check_Pre_Scripts and Check_Post_Scripts.        
-'myNewModel' has to match exactly the name defined in the model_settings.ini.   
+'myNewModel' has to match exactly the 'model' name defined in /models_settings/myModel_settings.ini.   
 
 for example:  
-in Check_Pre_Scripts, add the lines:  
+in Check_Pre_Scripts add the lines (in between the other elif-statements):  
 > elif model_name == 'myNewModel':   
 > return myNewModel_Pre_Script(SENSOR_Object)  
         
-in Check_Post_Scripts, add the lines:   
+in Check_Post_Scripts add the lines (in between the other elif-statements):   
 > elif model_name == 'myNewModel':   
 > return myNewModel_Post_Script(SENSOR_Object)   
         
