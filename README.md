@@ -1,5 +1,6 @@
 # sensor-data-sync
-Processes and time-synchronizes several sensor datas.
+Processes and time-synchronizes several sensor datas with custom scripts.   
+Work in Progres...  
 
 ## Systems and Packages required
 Python 3.6+,
@@ -137,3 +138,52 @@ Path to configuration (.ini) file. "default-directory"/config.ini if omitted
 csv file with start and end timestamps columns. First row must be the column names (i.e. "start" and "end").      
 Uses intervals as defined in config.ini if this argument is not provided.     
 Uses 10 minute intervals if this argument is missing and config.ini is missing too.
+
+## 3.) Create Custom Scripts
+for pre- or post-processing of data (before or after average)   
+
+### a.) Add your model to the functions Check_Pre_Scripts and Check_Post_Scripts  
+Open scripts.py and add your model name to the list of Check_Pre_Scripts and Check_Post_Scripts.  
+
+for example:  
+- in Check_Pre_Scripts, add the lines:  
+        elif model_name == 'myNewModel':   
+           return myNewModel_Pre_Script(SENSOR_Object)  
+        
+- in Check_Post_Scripts, add the lines:   
+        elif model_name == 'myNewModel':   
+           return myNewModel_Post_Script(SENSOR_Object)   
+        
+        
+### b.) Write your own Scripts  
+Open scripts.py and add your model name to the list of Check_Pre_Scripts and Check_Post_Scripts.  
+
+for example:  
+- def myNewModel_Pre_Script(SENSOR_Object):  
+        # Do Nothing  
+        return SENSOR_Object   
+    
+- def myNewModel_Post_Script(SENSOR_Object):   
+        SENSOR_Object.Linear_Modify('Concentration ug/m3', 1000,0) # Scale to column by factor 1000   
+        SENSOR_Object.Rename_sensor_signals('Concentration ug/m3', 'Concentration ng/m3', 'ng/m$^3$') # Rename the signal with new units
+        return SENSOR_Object   
+
+### c.) Customize Scripts   
+For more functionality, see library of pandas dataframe. New custom functions can be written and added to the scripts.py for custom processing algorithms.  
+For example:  
+
+Calculate the Amplitude and Phase (polar coordinates) from the input datasets with X and y (cartesian coordinates) and return the new dataframes:   
+- def Amplitude_Phase(sensor_df,X_Column,Y_Column,R_Name,Theta_Name):      
+        new_R = pd.DataFrame({R_Name: np.sqrt(sensor_df.df[X_Column]**2+sensor_df.df[Y_Column]**2)},index=sensor_df.df.index)   
+        new_Th = pd.DataFrame({Theta_Name: np.arctan2(sensor_df.df[Y_Column],sensor_df.df[X_Column])*180.0/np.pi},index=sensor_df.df.index)   
+        return new_R, new_Th    
+        
+Then use this function in your Pre/Post-Script: 
+- def myNewModel_Post_Script(SENSOR_Object):    
+        new_R, new_Th = Amplitude_Phase(SENSOR_Object.df2, 'X1', 'Y1', 'R1 [uPa]', 'Theta1 [deg]')    
+        SENSOR_Object.addSubset(new_R, ['R1 [uPa]'], ['uPa'], df_index = [2,3])   
+        SENSOR_Object.addSubset(new_Th, ['Theta1 [deg]'], ['deg'], df_index = [2,3])
+        return SENSOR_Object    
+
+
+    
