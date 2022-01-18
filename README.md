@@ -9,7 +9,7 @@ numpy,
 matplotlib
 
 
-## 1.) Setup new sensor settings model .ini
+## 1.) Setup new sensor model settings.ini
 ### a.) Set input parameters for new model in config.ini
 Open config.ini and set all values in section [INIT_SETTINGS]:  
 
