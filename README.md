@@ -1,14 +1,31 @@
 # sensor-data-sync
-Processes and time-synchronizes several sensor datas with custom scripts.   
+Processes and time-synchronizes several sensor datas with custom scripts.  
 
  Work in progress...  
+ 
+Overview of Readme:  
+- 0.) Systems and Packages required   
 
-## Systems and Packages required
-Python 3.6+,
-configparser,
-pandas,
-numpy,
-matplotlib
+- 1.) Setup new sensor model settings.ini  
+a. Set input parameters for new model in config.ini    
+b. Run main.py  
+c. Open new created settings.ini file and check if all is correct  
+
+- 2.) Synchronization process  
+a. Configure config.ini     
+b. Run main.py   
+
+- 3.) Create Custom Scripts  
+a. Add your model to the functions Check_Pre_Scripts and Check_Post_Scripts   
+b. Write your own Scripts   
+c. Customize Scripts     
+
+## 0.) Systems and Packages required  
+Python 3.6+  
+configparser  
+pandas  
+numpy  
+matplotlib  
 
 
 ## 1.) Setup new sensor model settings.ini
