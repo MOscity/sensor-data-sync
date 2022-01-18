@@ -170,7 +170,7 @@ if __name__ == "__main__":
         print('------------------------', file=sys.stderr)
         
         for use_index, value in enumerate(USE_BOOLS):
-            print('Sensor {ind}:\t\t'.format(ind=use_index),value, file=sys.stderr)
+            print('Sensor {ind}:\t\t'.format(ind=use_index+1),value, file=sys.stderr)
        
         # create new dataframe to merge all datas in (stack horizontally)
         total_df = pd.DataFrame()
@@ -221,7 +221,7 @@ if __name__ == "__main__":
                     date_units='s'
                     origin=pd.to_datetime('1900/01/01')
                     
-                print ("Reading #{sensor_count}: Sensor {k}, model {sensor_model}.".format(sensor_count=sensor_counts, k=k, sensor_model=Model_Name), file=sys.stderr)
+                print ("Reading #{sensor_count}: Sensor {k}, model {sensor_model}.".format(sensor_count=sensor_counts, k=k+1, sensor_model=Model_Name), file=sys.stderr)
                 slash_index = len(Data_File)-Data_File[::-1].find('/')
                 print (">> {data_path}".format(data_path=Data_File[:slash_index]), file=sys.stderr)
                 
@@ -297,8 +297,11 @@ if __name__ == "__main__":
                 total_df = total_df.drop_duplicates()
                     
                 total_df = total_df.sort_values('end')
+                
+                # To implement:
                 #total_df = total_df.backfill()
                 #total_df = total_df.ffill()
+                
                 total_sensor_df = sensor_df(total_df)
                 
                 # # Clear Memory

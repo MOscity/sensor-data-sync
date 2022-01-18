@@ -1,9 +1,11 @@
 from lib import rrule, timedelta, pd, register_matplotlib_converters, plt, mdates, FuncFormatter
 
 def my_date_formater(ax, delta):
+    """Formats matplotlib axes 
+        """
     if delta.days < 3:
         ax.xaxis.set_major_locator(mdates.DayLocator())
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%d-%m-%y'))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%a, %d-%b-%Y'))
         ax.xaxis.set_minor_formatter(mdates.DateFormatter('%H:%M'))
         ax.xaxis.grid(True, which='minor')
         ax.tick_params(axis="x", which="major", pad=15)
@@ -31,13 +33,15 @@ def my_date_formater(ax, delta):
         ax.set(xlabel='date')
 
 def my_days_format_function(x, pos=None):
-     x = mdates.num2date(x)
-     if pos == 0:
-         fmt = '%b %d\n%Y'
-     else:
-         fmt = '%b %-d'
-     label = x.strftime(fmt)
-     return label
+    """Formats matplotlib dates in daytime.
+        """
+    x = mdates.num2date(x)
+    if pos == 0:
+        fmt = '%d. %b\n%Y'
+    else:
+        fmt = '%d.%m '
+    label = x.strftime(fmt)
+    return label
 
 # def LabView_to_DateTime(tlab):
 #     return datetime.fromtimestamp(tlab - 2082844800)
@@ -46,6 +50,10 @@ def my_days_format_function(x, pos=None):
 #     return datetime.fromordinal(datetime(1900, 1, 1).toordinal() + texc - 2)
 
 def create_ini_file_from_dict(filepath,dictionary):
+    """Creates an .ini file from an dictionary.
+        filepath =      path for output file
+        dictionary =    input dictionary
+        """
     new_config_file = open(filepath, "w")
     new_config_file.write("[GENERAL_SETTINGS]\n")
     for key,value in dictionary.items():
@@ -89,14 +97,24 @@ def create_ini_file_from_dict(filepath,dictionary):
 
 
 def interval_rounder(t_mode,interval):
+    """Rounds a number to nearest multiple of interval.
+        t_mode =    input number (float/int)
+        interval =  number to build multiples of (float/int)
+        returns int
+        """
     interval_half = interval/2.0
     t_new = (t_mode//interval)*interval
     if (t_mode//interval_half)%2: t_new += interval
     return int(t_new)
 
          
-def time_rounder(t,interval=1,mode='min'): # modes = 'sec', 'min' or 'hour'
-    
+def time_rounder(t,interval=10,mode='min'): # modes = 'sec', 'min' or 'hour'
+    """Rounds a given daytime to the nearest multiple of interval.
+        t =         time of a day, type: datetime
+        interval =  time interval (Default = 10)
+        mode =      time units ('sec', 'min' (default) or 'hours')
+        returns datetime
+        """
     t_new_sec = t.second
     t_new_min = t.minute
     t_new_hour = t.hour
@@ -115,7 +133,7 @@ def time_rounder(t,interval=1,mode='min'): # modes = 'sec', 'min' or 'hour'
             t_new_min = t_new_min-60
             t_add = timedelta(hours=1)
         
-    else: # mode == 'hour':
+    else: # mode == 'hours':
         t_new_sec = 0
         t_new_min = 0
         t_new_hour = interval_rounder(t_new_hour,interval)
@@ -127,6 +145,8 @@ def time_rounder(t,interval=1,mode='min'): # modes = 'sec', 'min' or 'hour'
 
 
 def create_plot(y, x=None, yunits='##', title="mySensor", ytitle='eBC'):
+    """Creates a plot from y including labels and units. Written by Alejandro Keller.
+        """
     plt.style.use('ggplot')
     register_matplotlib_converters()
     
@@ -184,25 +204,54 @@ def create_plot(y, x=None, yunits='##', title="mySensor", ytitle='eBC'):
     plt.close()
     del(box)
 
-def calculate_intervals_csv(intervalfile, df_origin, decimals = 0 ,column=0):
+def calculate_intervals_csv(intervalfile, dataframe, decimals = 0 ,column=0, avg_mode=True, numerics_only=True):
+    """Averages a dataframe and returns new dataframe with time intervals as defined in intervalfile.
+        intervalfile =  file with interval., First row must be the column names (i.e. "start" and "end").
+        dataframe =     dataframe to average (pd.DataFrame)
+        decimals =      decimal points to round mean/median value
+        column =        columns to export as subset from dataframe
+                        if column = 0, all columns are exported
+        avg_mode =      if True: uses .mean() (Default),
+                        if False: uses .median()
+        numerics_only = if True: uses only non-empty entries (Default),
+                        if False: ignores non-empty entries.
+        returns pd.DataFrame
+        """
     if column == 0:
-        column = df_origin.columns
+        column = dataframe.columns.values.tolist().copy()
     df = pd.read_csv(intervalfile,
                      index_col = False,
                      parse_dates=['start','end'])
     for index, row in df.iterrows():
-        subset = df_origin.df.getSubset_df(row['start'], row['end'], column)
-        for key, value in subset.mean().iteritems():
+        subset = dataframe.df.getSubset_df(row['start'], row['end'], column)
+        
+        if avg_mode:
+            columns_dict = dict(subset.mean(numeric_only=numerics_only))
+        else:
+            columns_dict = dict(subset.median(numeric_only=numerics_only))
+            
+        for key, value in columns_dict.items():
             df.loc[index, key] = round(value,decimals)
     df = df.set_index('end')
     return df
 
 
-def calculate_intervals(dataframe, freq = 1, mode = 'min', decimals = 0, column=0, fill_nonempty=True ): 
+def calculate_intervals(dataframe, freq = 1, mode = 'min', decimals = 0, column=0, fill_nonempty=False, avg_mode=True, numerics_only=True): 
     """Averages a dataframe and returns new dataframe with equidistant time intervals of <freq> <mode>.
+        dataframe =     dataframe to average (pd.DataFrame)
+        freq =          interval distance
+        mode =          interval units ('sec', 'min' or 'hours')
+        decimals =      decimal points to round mean/median value
+        column =        columns to export as subset from dataframe
+                        if column = 0, all columns are exported
+        fill_nonempty = uses last non-empty value  of a selected subset is empty.
+                        iterates maximally 1500 minutes back in 1min steps.
+        avg_mode =      if True: uses .mean() (Default), 
+                        if False: uses .median()
+        numerics_only = if True: uses only non-empty entries (Default),
+                        if False: ignores non-empty entries.
+        returns pd.DataFrame
         """
-        
-    # Frequency is averaging interval in units of 'sec', 'min' or 'hours'
     df = pd.DataFrame(columns=['start','end'])
     
     if mode == 'sec':
@@ -216,7 +265,7 @@ def calculate_intervals(dataframe, freq = 1, mode = 'min', decimals = 0, column=
         ruler = rrule.HOURLY
         
     if column == 0:
-        column = dataframe.df.columns.values
+        column = dataframe.df.columns.values.tolist().copy()
         
     tmin = time_rounder((dataframe.df.first_valid_index()),freq,mode)
     tmax = time_rounder((dataframe.df.last_valid_index()),freq,mode) - dt_0
@@ -225,18 +274,21 @@ def calculate_intervals(dataframe, freq = 1, mode = 'min', decimals = 0, column=
         end = dt+dt_0
         subset = dataframe.getSubset_df(start, end, column)
         
-        #print(len(subset))
-        indie = 0
+        back_index = 0
         if fill_nonempty: # if subset is empty roll back in time to get last non-zero subset
-            while (len(subset)==0 and indie<=1000): 
-                subset = dataframe.getSubset_df(start-timedelta(minutes=indie),end, column)
-                indie+=1
+            while (len(subset)==0 and back_index<=1500): 
+                subset = dataframe.getSubset_df(start-timedelta(minutes=back_index),end, column)
+                back_index+=1
+                
         index = len(df)
         df.loc[index, 'start'] = start
         df.loc[index, 'end'] = end
 
-        columns_dict = dict(subset.mean(numeric_only=True))
-        
+        if avg_mode:
+            columns_dict = dict(subset.mean(numeric_only=numerics_only))
+        else:
+            columns_dict = dict(subset.median(numeric_only=numerics_only))
+            
         for key, value in columns_dict.items():
             df.loc[index, key] = round(value,decimals)
     df = df.set_index('end')
