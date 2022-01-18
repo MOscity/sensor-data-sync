@@ -1,7 +1,7 @@
 # sensor-data-sync
 Processes and time-synchronizes several sensor datas with custom scripts.   
 
->> Work in progress...  
+ Work in progress...  
 
 ## Systems and Packages required
 Python 3.6+,
@@ -127,7 +127,7 @@ Provide valid data directories, file path extensions and settings.ini for the se
 File extensions with for example '*.csv' will use all datas ending with '.csv'  .  
 File extensions with for example 'AE33_AE33*' will use all datas starting with 'AE33_AE33'.    
 Model Settings directory is in the same directory as this script and should not be moved.     
-Save new model settings in that directory.    
+Save new model settings in that directory and provide a valid path for SETTINGS_SENSOR_i (see other models as example).    
 
 ### b.) Run main.py
 Run main.py with optional arguments     
@@ -141,50 +141,50 @@ Uses intervals as defined in config.ini if this argument is not provided.
 Uses 10 minute intervals if this argument is missing and config.ini is missing too.
 
 ## 3.) Create Custom Scripts
-for pre- or post-processing of data (before or after average)   
+If you like to use python library for data processing instead for example excel.        
+Write your custom python scripts for pre- or post-processing of the data (before or after average).   
 
-### a.) Add your model to the functions Check_Pre_Scripts and Check_Post_Scripts  
-Open scripts.py and add your model name to the list of Check_Pre_Scripts and Check_Post_Scripts.  
+### a.) Add your model to the functions Check_Pre_Scripts and Check_Post_Scripts        
+Open scripts.py and add your model name to the list of Check_Pre_Scripts and Check_Post_Scripts.        
+'myNewModel' has to match exactly the name defined in the model_settings.ini.   
 
 for example:  
-- in Check_Pre_Scripts, add the lines:  
-        elif model_name == 'myNewModel':   
-           return myNewModel_Pre_Script(SENSOR_Object)  
+in Check_Pre_Scripts, add the lines:  
+> elif model_name == 'myNewModel':   
+> return myNewModel_Pre_Script(SENSOR_Object)  
         
-- in Check_Post_Scripts, add the lines:   
-        elif model_name == 'myNewModel':   
-           return myNewModel_Post_Script(SENSOR_Object)   
+in Check_Post_Scripts, add the lines:   
+> elif model_name == 'myNewModel':   
+> return myNewModel_Post_Script(SENSOR_Object)   
         
         
 ### b.) Write your own Scripts  
-Open scripts.py and add your model name to the list of Check_Pre_Scripts and Check_Post_Scripts.  
+Open scripts.py and define the functions 'myNewModel'_Pre_Script and _Post_Script: 
 
 for example:  
-- def myNewModel_Pre_Script(SENSOR_Object):  
-        # Do Nothing  
-        return SENSOR_Object   
+> def myNewModel_Pre_Script(SENSOR_Object):  
+> return SENSOR_Object    
     
-- def myNewModel_Post_Script(SENSOR_Object):   
-        SENSOR_Object.Linear_Modify('Concentration ug/m3', 1000,0) # Scale to column by factor 1000   
-        SENSOR_Object.Rename_sensor_signals('Concentration ug/m3', 'Concentration ng/m3', 'ng/m$^3$') # Rename the signal with new units
-        return SENSOR_Object   
+> def myNewModel_Post_Script(SENSOR_Object):   
+> SENSOR_Object.Linear_Modify('Concentration ug/m3', 1000,0)  
+> SENSOR_Object.Rename_sensor_signals('Concentration ug/m3', 'Concentration ng/m3', 'ng/m$^3$')         
+> return SENSOR_Object   
 
 ### c.) Customize Scripts   
 For more functionality, see library of pandas dataframe. New custom functions can be written and added to the scripts.py for custom processing algorithms.  
 For example:  
 
 Calculate the Amplitude and Phase (polar coordinates) from the input datasets with X and y (cartesian coordinates) and return the new dataframes:   
-- def Amplitude_Phase(sensor_df,X_Column,Y_Column,R_Name,Theta_Name):      
-        new_R = pd.DataFrame({R_Name: np.sqrt(sensor_df.df[X_Column]**2+sensor_df.df[Y_Column]**2)},index=sensor_df.df.index)   
-        new_Th = pd.DataFrame({Theta_Name: np.arctan2(sensor_df.df[Y_Column],sensor_df.df[X_Column])*180.0/np.pi},index=sensor_df.df.index)   
-        return new_R, new_Th    
+> def Amplitude_Phase(sensor_df,X_Column,Y_Column,R_Name,Theta_Name):      
+> new_R = pd.DataFrame({R_Name: np.sqrt(sensor_df.df[X_Column]**2+sensor_df.df[Y_Column]**2)},index=sensor_df.df.index)   
+> new_Th = pd.DataFrame({Theta_Name: np.arctan2(sensor_df.df[Y_Column],sensor_df.df[X_Column])*180.0/np.pi},index=sensor_df.df.index)   
+> return new_R, new_Th    
         
 Then use this function in your Pre/Post-Script: 
-- def myNewModel_Post_Script(SENSOR_Object):    
-        new_R, new_Th = Amplitude_Phase(SENSOR_Object.df2, 'X1', 'Y1', 'R1 [uPa]', 'Theta1 [deg]')    
-        SENSOR_Object.addSubset(new_R, ['R1 [uPa]'], ['uPa'], df_index = [2,3])   
-        SENSOR_Object.addSubset(new_Th, ['Theta1 [deg]'], ['deg'], df_index = [2,3])
-        return SENSOR_Object    
+> def myNewModel_Post_Script(SENSOR_Object):    
+> new_R, new_Th = Amplitude_Phase(SENSOR_Object.df2, 'X1', 'Y1', 'R1 [uPa]', 'Theta1 [deg]')    
+> SENSOR_Object.addSubset(new_R, ['R1 [uPa]'], ['uPa'], df_index = [2,3])   
+> SENSOR_Object.addSubset(new_Th, ['Theta1 [deg]'], ['deg'], df_index = [2,3])
+> return SENSOR_Object    
 
-
-    
+Last but not least, run main.py again and see if your scripts works :)
