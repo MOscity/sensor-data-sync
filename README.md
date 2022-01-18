@@ -9,8 +9,8 @@ numpy,
 matplotlib
 
 
-## 1.) Setup new sensor settings data 
-### a.) Create new settings.ini for your model  
+## 1.) Setup new sensor settings model .ini
+### a.) Set input parameters for new model in config.ini
 Open config.ini and set all values in section [INIT_SETTINGS]:  
 
 - INIT_NEW_SENSOR : True      
