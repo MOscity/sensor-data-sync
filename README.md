@@ -191,7 +191,7 @@ for example:
 For more functionality, see library of pandas dataframe. New custom functions can be written and added to the scripts.py for custom processing algorithms.  
 
 For example:   
-Calculate the Amplitude and Phase (polar coordinates) from the input datasets with X and y (cartesian coordinates) and return the new dataframes:     
+Calculate the Amplitude and Phase (polar coordinates) from the input datasets X and Y (cartesian coordinates) and return the new dataframes:     
 > def Amplitude_Phase(sensor_df,X_Column,Y_Column,R_Name,Theta_Name):      
 > new_R = pd.DataFrame({R_Name: np.sqrt(sensor_df.df[X_Column]**2+sensor_df.df[Y_Column]**2)},index=sensor_df.df.index)   
 > new_Th = pd.DataFrame({Theta_Name: np.arctan2(sensor_df.df[Y_Column],sensor_df.df[X_Column])*180.0/np.pi},index=sensor_df.df.index)   
