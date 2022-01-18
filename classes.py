@@ -302,6 +302,9 @@ class Sensor(object):
         
         if plotkey == '': #or header_out.count(plotkey)==0:
             plotkey_out = header_out[-1]
+        # or if plotkey is None
+        elif plotkey==None:
+            plotkey_out = header_out[-1]
         # or if plotkey is not in signals list, use last column for plots
         elif header_out.count(plotkey)==0:
             print('There is no plotkey named {pkey}'.format(pkey=plotkey))

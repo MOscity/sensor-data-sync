@@ -24,8 +24,9 @@ if __name__ == "__main__":
     parser.add_argument('--intervals', required=False, dest='CSV', type=argparse.FileType('r'),
                         help='csv file with start and end timestamps columns. '
                               'First row must be the column names (i.e. "start" and "end"). '
-                              'Uses minutely intervals if this parameter'
-                              'is missing (as defined in config.ini).')
+                              'Uses intervals as defined in config.ini if this argument is '
+                              'not provided. Uses 10 minute intervals if this argument is '
+                              'missing and config.ini is missing too.')
  
     args = parser.parse_args()
         
@@ -166,6 +167,7 @@ if __name__ == "__main__":
         print('Mode:\t\t\t', MODE, file=sys.stderr)
         print('Frequency:\t\t', FREQ, file=sys.stderr)
         print('Fill_Times:\t\t', FILL_TIMES, file=sys.stderr)
+        print('------------------------', file=sys.stderr)
         
         for use_index, value in enumerate(USE_BOOLS):
             print('Sensor {ind}:\t\t'.format(ind=use_index),value, file=sys.stderr)
@@ -180,7 +182,7 @@ if __name__ == "__main__":
         for USE_ME,k in zip(USE_BOOLS,range(len(USE_BOOLS))):
             if USE_ME:
                 sensor_counts += 1
-                print('-------------------', file=sys.stderr)
+                print('------------------------', file=sys.stderr)
                 
                 # Get Data Files and Settings
                 Data_File = DATA_PATHS[k]          
@@ -188,7 +190,6 @@ if __name__ == "__main__":
        
                 # read sensor settings
                 config.read(Sensor_Config)
-                
                 
                 Model_Name = eval(config['MODEL_SETTINGS']['model'])
                 Sensor_Name = Model_Name
@@ -211,12 +212,16 @@ if __name__ == "__main__":
                     origin = eval(config['MODEL_SETTINGS']['origin'])
                     if origin == 'creation_day_of_file':
                         origin = pd.to_datetime(datetime.fromtimestamp(os.path.getctime(Data_File)).strftime('%D'))
+                    elif origin == 'modification_day_of_file':
+                        origin = pd.to_datetime(datetime.fromtimestamp(os.path.getmtime(Data_File)).strftime('%D'))
+                    else:
+                        origin = pd.to_datetime(origin)
                 else:
                     # Use default values
                     date_units='s'
                     origin=pd.to_datetime('1900/01/01')
                     
-                print ("Reading {Sensor_Name} data, model {sensor_model}.".format(Sensor_Name=Sensor_Name, sensor_model=Model_Name), file=sys.stderr)
+                print ("Reading #{sensor_count}: Sensor {k}, model {sensor_model}.".format(sensor_count=sensor_counts, k=k, sensor_model=Model_Name), file=sys.stderr)
                 slash_index = len(Data_File)-Data_File[::-1].find('/')
                 print (">> {data_path}".format(data_path=Data_File[:slash_index]), file=sys.stderr)
                 
@@ -261,7 +266,7 @@ if __name__ == "__main__":
                     # if event_id == 0:
                     #     SENSOR_Object.df3.df.to_csv(DATA_PATH_SAVE_EXPORT+'Debug_df3_{model}_{number}_id{id}.csv'.format(model=Model_Name,number=sensor_counts,id = event_id), sep=';', na_rep = 0, header=SENSOR_Object.df3.df.columns.values,quotechar = '#')
                     
-                    # # drop 'start' timestamp
+                    # # Remove time columns with 'start' timestamps. Optional...
                     SENSOR_Object.removeSubset('start')   
        
                     # Update df   
@@ -269,9 +274,10 @@ if __name__ == "__main__":
                     intervals_df_export = SENSOR_Object.df3.df
                     
                     # # Make 1 Graph, defined per plotkey
-                    # y = intervals_df_export[SENSOR_Object.plotkey]
-                    # plotTitle = "{Sensor_Name}, Model: {sensor_model}".format(Sensor_Name=Sensor_Name,sensor_model=Model_Name)
-                    # create_plot(y, yunits=SENSOR_Object.signal_units_dict.get(SENSOR_Object.plotkey), title=plotTitle, ytitle=str(SENSOR_Object.plotkey))
+                    y = intervals_df_export[SENSOR_Object.plotkey]
+                    plotTitle = "Sensor: {sensor_model}".format(sensor_model=Model_Name)
+                    if len(y)>0:
+                        create_plot(y, yunits=SENSOR_Object.signal_units_dict.get(SENSOR_Object.plotkey, ''), title=plotTitle, ytitle=str(SENSOR_Object.plotkey))
                     
                     # Join Dataframes and stack vertically
                     events_df = pd.concat([events_df, intervals_df_export]).sort_values('end')
@@ -282,7 +288,7 @@ if __name__ == "__main__":
                     del(intervals_df_export)
                     del(SENSOR_Object)
                 
-                # # Remove time columns with 'start' timestamps. Optional...
+                # # Remove time columns with 'start' timestamps. Optional... and redundant?
                 events_sensor_df.removeColumn_from_df('start')   
                 total_sensor_df.removeColumn_from_df('start')  
                 
@@ -291,7 +297,8 @@ if __name__ == "__main__":
                 total_df = total_df.drop_duplicates()
                     
                 total_df = total_df.sort_values('end')
-                #total_df = total_df.backfill().ffill()
+                #total_df = total_df.backfill()
+                #total_df = total_df.ffill()
                 total_sensor_df = sensor_df(total_df)
                 
                 # # Clear Memory
