@@ -15,7 +15,7 @@ c. Open new created settings.ini file and check if all is correct
 a. Configure config.ini     
 b. Run main.py   
 
-- 3.) Create Custom Scripts  
+- 3.) Create Custom Scripts (optional)  
 a. Add your model to the functions Check_Pre_Scripts and Check_Post_Scripts   
 b. Write your own Scripts   
 c. Customize Scripts     
@@ -157,7 +157,7 @@ csv file with start and end timestamps columns. First row must be the column nam
 Uses intervals as defined in config.ini if this argument is not provided.     
 Uses 10 minute intervals if this argument is missing and config.ini is missing too.
 
-## 3.) Create Custom Scripts
+## 3.) Create Custom Scripts (optional)
 If you like to use python library for data processing instead for example excel.        
 Write your custom python scripts for pre- or post-processing of the data (before or after average).   
 
