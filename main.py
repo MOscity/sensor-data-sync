@@ -1,6 +1,6 @@
 import lib
 from lib import sys, os, glob, configparser, argparse
-from lib import pd, datetime
+from lib import pd, datetime, timedelta
 
 from classes import sensor_df,Sensor
 from functions import calculate_intervals,calculate_intervals_csv,create_plot,create_ini_file_from_dict, my_header_formatter
@@ -58,9 +58,11 @@ if __name__ == "__main__":
         FREQ = eval(config['OUTPUT_SETTINGS']['FREQ'])
         MODE = eval(config['OUTPUT_SETTINGS']['MODE'])
         FILL_TIMES = eval(config['OUTPUT_SETTINGS']['FILL_TIMES'])
+        STACK_FIRST = eval(config['OUTPUT_SETTINGS']['STACK_FIRST'])
         
         START_EXPORT = eval(config['OUTPUT_SETTINGS']['START_EXPORT'])
         END_EXPORT =  eval(config['OUTPUT_SETTINGS']['END_EXPORT'])
+        EXPORT_DAILY = eval(config['OUTPUT_SETTINGS']['EXPORT_DAILY'])
         
         DATA_PATH_SAVE_EXPORT = eval(config['OUTPUT_SETTINGS']['DATA_PATH_SAVE_EXPORT'])
         FILE_EXT_SAVE_EXPORT_0 = eval(config['OUTPUT_SETTINGS']['FILE_EXT_SAVE_EXPORT'])
@@ -90,9 +92,11 @@ if __name__ == "__main__":
         FREQ = 10
         MODE = 'min'
         FILL_TIMES = False
-
+        STACK_FIRST = True
+        
         START_EXPORT = None
         END_EXPORT = None
+        EXPORT_DAILY = False
         
         FILE_PATH_SAVE_EXPORT = default_dir + 'output/Average_out_{freq}{mode}.csv'.format(freq=FREQ,mode=MODE)
         
@@ -331,7 +335,28 @@ if __name__ == "__main__":
         # # Clear Memory
         del(subtotal_df)
         
-        
+        if EXPORT_DAILY and START_EXPORT!=None and END_EXPORT!=None:
+            START_EXPORT_Day = pd.to_datetime(START_EXPORT , format='%d-%m-%Y')
+            END_EXPORT_Day = pd.to_datetime(END_EXPORT , format='%d-%m-%Y')
+            START_PD_N = START_EXPORT_Day
+            
+            dcount = 0
+            while START_PD_N < END_EXPORT_Day :
+                START_PD_N = START_EXPORT_Day + timedelta(days=dcount)
+                END_PD_N = START_EXPORT_Day + timedelta(days=dcount+1)
+                
+                START_EXPORT_N = START_PD_N.strftime('%d-%m-%Y')
+                END_EXPORT_N = END_PD_N.strftime('%d-%m-%Y')
+                
+                FILE_PATH_SAVE_STARTEND_N = FILE_PATH_SAVE_EXPORT_0+'_{freq}{mode}__{start}__{end}.csv'.format(freq=FREQ,mode=MODE,start=START_EXPORT_N,end=END_EXPORT_N)
+            
+                # # Save Time Subset of exports
+                subtotal_df = total_sensor_df.getSubset_df(START_PD_N,END_PD_N)
+                if len(subtotal_df) > 0:
+                    subtotal_df.to_csv(FILE_PATH_SAVE_STARTEND_N, sep=';', header=header_export_renamed, na_rep = 0,quotechar = '#')
+                del(subtotal_df)
+                dcount +=1
+                
         # # Clear Memory
         #del(total_sensor_df)
         

@@ -62,7 +62,7 @@ def PMS_Post_Script(SENSOR_Object):
 
 
 def ComPASV4_Pre_Script(SENSOR_Object):
-    # This is my custom script and it's not done yet.
+    # This is my custom script and it's not finished yet.
     
     # BKG_Bools_All = SENSOR_Object.df1.df['BKG Meas. Active'].astype(bool)
     # BKG_Bools_All_NOT = abs(SENSOR_Object.df1.df['BKG Meas. Active']-1.0).astype(bool)
@@ -77,9 +77,8 @@ def ComPASV4_Pre_Script(SENSOR_Object):
     return SENSOR_Object
 
 def ComPASV4_Post_Script(SENSOR_Object):
-    # This is my custom script and it's not done yet.
-    
-    
+    # This is my custom script and it's not finished yet.
+        
     # Add new Columns and Calibrate  
     # Blue:
     A_Blue = 1221.5/558.0 

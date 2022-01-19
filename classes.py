@@ -359,10 +359,10 @@ class Sensor(object):
                 if (key != TimeColumn_out) or (key != DateColumn_out):
                     self.df1.df[key] = self.df1.df[key].astype(float)
         
-        if header_export_out.count(TimeColumn_out)>0:
-            header_export_out.remove(TimeColumn_out)
-        if header_export_out.count(DateColumn_out)>0:
-            header_export_out.remove(DateColumn_out)
+        # if header_export_out.count(TimeColumn_out)>0:
+        #     header_export_out.remove(TimeColumn_out)
+        # if header_export_out.count(DateColumn_out)>0:
+        #     header_export_out.remove(DateColumn_out)
 
         
         if TimeFormat_out == None: # if TimeFormat = None,: infer date time
