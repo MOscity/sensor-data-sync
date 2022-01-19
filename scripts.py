@@ -106,10 +106,13 @@ def ComPASV4_Post_Script(SENSOR_Object):
     SENSOR_Object.addSubset(new_R2/214.7483648, ['R2 [uPa]'], ['uPa'], df_index = [2,3]) # Scale R to uPa
     SENSOR_Object.addSubset(new_Th2, ['Theta2 [deg]'], ['deg'], df_index = [2,3]) # Theta in deg
     
-    SENSOR_Object.plotkey = 'Blue 60s Mov. Avg [Mm^-1]'
+    SENSOR_Object.plotkey = 'R1 [uPa]'
     
     SENSOR_Object.df2.df['BKG Meas. Active'] = SENSOR_Object.df2.df['BKG Meas. Active'].astype(bool)
     SENSOR_Object.df3.df['BKG Meas. Active'] = SENSOR_Object.df3.df['BKG Meas. Active'].astype(bool)
+    
+    SENSOR_Object.df2.df['BKG Meas. Active'] = SENSOR_Object.df2.df['BKG Meas. Active'].astype(float)
+    SENSOR_Object.df3.df['BKG Meas. Active'] = SENSOR_Object.df3.df['BKG Meas. Active'].astype(float)
     
     # BKG_Bools = SENSOR_Object.df2.df['BKG Meas. Active']
     # Lockin_X1 = SENSOR_Object.df2.df['X1']

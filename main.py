@@ -3,7 +3,7 @@ from lib import sys, os, glob, configparser, argparse
 from lib import pd, datetime
 
 from classes import sensor_df,Sensor
-from functions import calculate_intervals,calculate_intervals_csv,create_plot,create_ini_file_from_dict
+from functions import calculate_intervals,calculate_intervals_csv,create_plot,create_ini_file_from_dict, my_header_formatter
 from scripts import Check_Post_Scripts, Check_Pre_Scripts
 
 ## MAIN
@@ -175,6 +175,7 @@ if __name__ == "__main__":
         # create new dataframe to merge all datas in (stack horizontally)
         total_df = pd.DataFrame()
         total_sensor_df = sensor_df(pd.DataFrame())
+        header_export_renamed = []
         
         # count the sensors used, for debug purpose
         sensor_counts = 0    
@@ -239,25 +240,30 @@ if __name__ == "__main__":
                    
                     # Crate Sensor Object with given parameters
                     SENSOR_Object = Sensor(Sensor_Name,Model_Name,Data_File_Final,header=header,header_export=header_export,signal_units_dict=signal_units_dict,other_dict=other_dict,TimeColumn=TimeColumn,TimeFormat=TimeFormat,append_text=append_text,quotechar=quotechar,separator=separator, skiprows=skiprows, plotkey=plotkey, date_units=date_units,origin=origin)
-            
+
                     # Calibrations and custom Scripts before
                     SENSOR_Object = Check_Pre_Scripts(SENSOR_Object)
+                    
                     # Calculate averages:  
                     if args.CSV: # if CSV file is provided
                         intervals_df_all = calculate_intervals_csv(args.CSV, SENSOR_Object.df1.df,column=SENSOR_Object.signals)
                     else: # as config.ini or arguments given
                         intervals_df_all = calculate_intervals(SENSOR_Object.df1,freq=FREQ,mode=MODE,column=SENSOR_Object.signals,decimals=9)
-                       
-                    # Calculate averages:  
+                
+                    # Calculate averages of export signals: 
                     if args.CSV: # if CSV file is provided
                         intervals_df_export = calculate_intervals_csv(args.CSV, SENSOR_Object.df1.df,column=SENSOR_Object.signals_export)
                     else: # as config.ini or arguments given
                         intervals_df_export = calculate_intervals(SENSOR_Object.df1,freq=FREQ,mode=MODE,column=SENSOR_Object.signals_export,decimals=9)
-                                      
+                                     
                     # replace df in object
                     SENSOR_Object.df2.df = intervals_df_all
                     SENSOR_Object.df3.df = intervals_df_export
- 
+                    
+                    # # Clear Memory
+                    del(intervals_df_all)
+                    del(intervals_df_export)
+                    
                     # Calibrations and custom Scripts after averaging 
                     SENSOR_Object = Check_Post_Scripts(SENSOR_Object)           
                     
@@ -270,27 +276,33 @@ if __name__ == "__main__":
                     SENSOR_Object.removeSubset('start')   
        
                     # Update df   
-                    intervals_df_all = SENSOR_Object.df2.df
-                    intervals_df_export = SENSOR_Object.df3.df
+                    #intervals_df_all = SENSOR_Object.df2.df
+                    #intervals_df_export = SENSOR_Object.df3.df
                     
                     # # Make 1 Graph, defined per plotkey
-                    y = intervals_df_export[SENSOR_Object.plotkey]
+                    y = SENSOR_Object.df3.df[SENSOR_Object.plotkey]
                     plotTitle = "Sensor: {sensor_model}".format(sensor_model=Model_Name)
                     if len(y)>0:
                         create_plot(y, yunits=SENSOR_Object.signal_units_dict.get(SENSOR_Object.plotkey, ''), title=plotTitle, ytitle=str(SENSOR_Object.plotkey))
                     
                     # Join Dataframes and stack vertically
-                    events_df = pd.concat([events_df, intervals_df_export]).sort_values('end')
+                    events_df = pd.concat([events_df, SENSOR_Object.df3.df])
+                    events_df = events_df.sort_values('end')
                     events_sensor_df = sensor_df(events_df)
                     
-                    # # Clear Memory
-                    del(intervals_df_all)
-                    del(intervals_df_export)
+                    
                     del(SENSOR_Object)
                 
+               
                 # # Remove time columns with 'start' timestamps. Optional... and redundant?
                 events_sensor_df.removeColumn_from_df('start')   
                 total_sensor_df.removeColumn_from_df('start')  
+                
+                new_cols_to_add = my_header_formatter(events_sensor_df.df.columns.values.tolist())
+                
+                for str_indx,str_value in enumerate(new_cols_to_add):
+                    new_cols_to_add[str_indx] = '{}_'.format(Model_Name).replace('-','_') + str_value
+                    header_export_renamed.append(new_cols_to_add[str_indx])
                 
                 # # Join Dataframes and stack horizontally
                 total_df = total_sensor_df.df.join(events_sensor_df.df,rsuffix='_{}'.format(Model_Name),how='outer')
@@ -298,11 +310,11 @@ if __name__ == "__main__":
                     
                 total_df = total_df.sort_values('end')
                 
-                # To implement:
+                # To implement as option:
                 #total_df = total_df.backfill()
                 #total_df = total_df.ffill()
-                
                 total_sensor_df = sensor_df(total_df)
+                
                 
                 # # Clear Memory
                 del(events_sensor_df)
@@ -310,11 +322,11 @@ if __name__ == "__main__":
     
     
         # # Save exports
-        total_sensor_df.df.to_csv(FILE_PATH_SAVE_EXPORT, sep=';', na_rep = 0,quotechar = '#')
+        total_sensor_df.df.to_csv(FILE_PATH_SAVE_EXPORT, sep=';', header=header_export_renamed, na_rep = 0,quotechar = '#')
         
         # # Save Time Subset of exports
         subtotal_df = total_sensor_df.getSubset_df(START_PD,END_PD)
-        subtotal_df.to_csv(FILE_PATH_SAVE_STARTEND, sep=';', na_rep = 0,quotechar = '#')
+        subtotal_df.to_csv(FILE_PATH_SAVE_STARTEND, sep=';', header=header_export_renamed, na_rep = 0,quotechar = '#')
        
         # # Clear Memory
         del(subtotal_df)

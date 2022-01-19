@@ -1,5 +1,22 @@
 from lib import rrule, timedelta, pd, register_matplotlib_converters, plt, mdates, FuncFormatter
 
+def my_header_formatter(header_list, replace_signs= ['[',']','{','}','(',')','$',':',';','.','-','#','&','/','\\','%','^']):
+    export_header = header_list.copy()
+    for l_indx,orig_value in enumerate(header_list):
+        for r_indx,repl_value in enumerate(replace_signs):
+            if repl_value == '/':
+                export_header[l_indx] = export_header[l_indx].replace(repl_value, ' per ')
+            elif repl_value == '%':
+                export_header[l_indx] = export_header[l_indx].replace(repl_value, ' percent ')
+            else:
+                export_header[l_indx] = export_header[l_indx].replace(repl_value, ' ')
+        split_string = export_header[l_indx].split(' ')
+        while split_string.count('')>0:
+            split_string.remove('')
+        export_header[l_indx] = '_'.join(split_string)
+    return export_header
+
+
 def my_date_formater(ax, delta):
     """Formats matplotlib axes 
         """
@@ -236,7 +253,7 @@ def calculate_intervals_csv(intervalfile, dataframe, decimals = 0 ,column=0, avg
     return df
 
 
-def calculate_intervals(dataframe, freq = 1, mode = 'min', decimals = 0, column=0, fill_nonempty=False, avg_mode=True, numerics_only=True): 
+def calculate_intervals(dataframe, freq = 1, mode = 'min', decimals = 0, column=0, fill_nonempty=True, avg_mode=True, numerics_only=True): 
     """Averages a dataframe and returns new dataframe with equidistant time intervals of <freq> <mode>.
         dataframe =     dataframe to average (pd.DataFrame)
         freq =          interval distance

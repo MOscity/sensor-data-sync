@@ -265,11 +265,11 @@ class Sensor(object):
        
         # If no header is provided, use first row as header
         if header_out == None:
-            header_out = self.df1.df.columns.to_list()
+            header_out = self.df1.df.columns.to_list().copy()
 
         # If a header is provided, check if type is list and if length matches with number of columns
         elif type(header_out)==list:  
-            current_header_len = len(self.df1.df.columns.to_list())
+            current_header_len = len(self.df1.df.columns.to_list().copy())
             if len(header_out)==current_header_len:
                 header_out = header
             else:
@@ -279,12 +279,13 @@ class Sensor(object):
         
         # If no export header is provided, use all columns    
         if header_export == None:
-            header_export_out = header_out
+            header_export_out = header_out.copy()
         elif type(header_out) == list:
             header_export_out = header_export
         else:
             raise Exception("Type of header_export has to be None or list.")
-          
+        
+        
             
         # If no signal units are provided, create a dictionary with header as keys and empty values
         if signal_units_dict == None:
@@ -311,11 +312,7 @@ class Sensor(object):
             plotkey_out = header_out[-1]
             
             
-        self.signals = header_out
-        self.signals_export = header_export_out
-        self.signal_units_dict = signal_units_dict_out
-        self.other_dict = other_dict_out
-        self.plotkey = plotkey_out   
+
         
         # If TimeColumn is None, use first column for timestamp.
         if TimeColumn == None:
@@ -361,7 +358,13 @@ class Sensor(object):
             for key in header_out:
                 if (key != TimeColumn_out) or (key != DateColumn_out):
                     self.df1.df[key] = self.df1.df[key].astype(float)
+        
+        if header_export_out.count(TimeColumn_out)>0:
+            header_export_out.remove(TimeColumn_out)
+        if header_export_out.count(DateColumn_out)>0:
+            header_export_out.remove(DateColumn_out)
 
+        
         if TimeFormat_out == None: # if TimeFormat = None,: infer date time
             self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[TimeColumn_out], infer_datetime_format=True)
         elif TimeFormat_out in ['Excel']:
@@ -379,7 +382,14 @@ class Sensor(object):
         
         self.df1.df = self.df1.df.set_index('Datetime')
  
-
+        self.signals = header_out
+        self.signals_export = header_export_out
+        self.signal_units_dict = signal_units_dict_out
+        self.other_dict = other_dict_out
+        self.plotkey = plotkey_out   
+        
+        
+        
     def getdf(self, df_index = 1):
         """returns the sensor_df of the selected dataframe.
             df_index = 1(=default), 2 or 3"""    
