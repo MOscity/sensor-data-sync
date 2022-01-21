@@ -36,7 +36,7 @@ Open config.ini and set all values in section [INIT_SETTINGS]:
 set to True to create new settings.ini file for new model (no data synchronization). i.e., if set to True, all "USE_SENSOR_i" will be interpreted as False.
 
 - MODELNAME_NEW     
-ID Name to recognize the model  
+ID Name to recognize the model later
 
 - DATA_PATH_NEW & FILE_EXT_NEW    
 Provide valid data path for input datas   
@@ -86,12 +86,6 @@ Time Format for the time datas. See above.
 Column name with the time units. Use None to use first column.   
 If provided, use exact name of the time/index column. 
 
-- append_text : ''      
-Not yet implemented feature.    
-
-- quotechar : '"'     
-Character used for quotations in the datafile.     
-
 - plotkey : ''      
 Column for preview plot. Use '' or None to use last column.     
 
@@ -103,10 +97,6 @@ Signals to export. If None, header_export = header.
 
 - signal_units_dict : {}   
 Dictionary for the units of the signals/columns. Use None for no units.     
-
-- other_dict : {}     
-Additional dictionary, for example wavelengths for some signals.    
-
 
 
 ## 2.) Synchronization process
@@ -123,18 +113,30 @@ Freq: any integer > 0 for the equidistant time intervals.
 - MODE: 'min'     
 Mode: sec, min or hours for the units of the time intervals.    
 
-- FILL_TIMES: True/False    
-Fill_Times: if True, exported dataframe will be in equidistant time intervals (and empty entries are set to 0).      
-if False, only non-empty rows will be exported.    
-Note: Not yet implemented     
+- DATA_PATH_SAVE_EXPORT & FILE_EXT_SAVE_EXPORT:     
+Path for the output files    
+
+- BACK_FILL : True/False   
+if True, missing values in exported dataframe will be filled (backward).  
+if False, missing values will be replaced with 0's.      
+
+- FORMAT_OUTPUT_HEADER : True/False    
+Format output header: If True, all special characters (e.g. /.:&° etc) will be replaced with _   
+Note: It is then easier to import the data in 'Veusz'.   
+If False, exported header will be as in the original datafiles or as defined in model_settings.ini   
+
 
 - START_EXPORT & END_EXPORT     
 Start and End Datetime for Export: if provided (if not None), an additional export file will be created     
-containing only data between the given start and end time.      
-Note: All datas defined in config.ini > General_Settings will be read anyway, independent of these inputs.    
+containing only data between the given start and end time.        
+Note: All datas defined in config.ini > General_Settings will be read anyway, independent of these inputs.       
+Note: Format must be 'dd.mm.YYYY' (str), e.g.:     
+START_EXPORT : '8.12.2021'    
+END_EXPORT : '22.12.2021'    
 
-- DATA_PATH_SAVE_EXPORT & FILE_EXT_SAVE_EXPORT:     
-Path for the output files     
+- EXPORT_DAILY: True/False    
+Export Daily: if true and START_EXPORT & END_EXPORT is provided, additional files will be created    
+for every day between START_EXPORT and END_EXPORT  
 
 - USE_SENSOR_i : True/False     
 Configuration of sensors to use for processing/synchronization.     
@@ -168,24 +170,24 @@ Open scripts.py and add your model name to the list of Check_Pre_Scripts and Che
 for example:  
 in Check_Pre_Scripts add the lines (in between the other elif-statements):  
 > elif model_name == 'myNewModel':   
-> return myNewModel_Pre_Script(SENSOR_Object)  
+> return myNewModel_Pre_Script(SENSOR_Object_df)  
         
 in Check_Post_Scripts add the lines (in between the other elif-statements):   
 > elif model_name == 'myNewModel':   
-> return myNewModel_Post_Script(SENSOR_Object)   
+> return myNewModel_Post_Script(SENSOR_Object_df)   
         
         
 ### b.) Write your own Scripts  
 Open scripts.py and define the functions 'myNewModel'_Pre_Script and 'myNewModel'_Post_Script:  
 
 for example:   
-> def myNewModel_Pre_Script(SENSOR_Object):  
-> return SENSOR_Object    
+> def myNewModel_Pre_Script(SENSOR_Object_df):  
+> return SENSOR_Object_df    
     
-> def myNewModel_Post_Script(SENSOR_Object):   
-> SENSOR_Object.Linear_Modify('Concentration ug/m3', 1000,0)  
-> SENSOR_Object.Rename_sensor_signals('Concentration ug/m3', 'Concentration ng/m3', 'ng/m$^3$')         
-> return SENSOR_Object   
+> def myNewModel_Post_Script(SENSOR_Object_df):   
+> SENSOR_Object_df.Linear_Modify_df('Concentration ug/m3', 1000,0)  
+> SENSOR_Object_df.Rename_df_Column('Concentration ug/m3', 'Concentration ng/m3')         
+> return SENSOR_Object_df   
 
 ### c.) Customize Scripts   
 For more functionality, see library of pandas dataframe. New custom functions can be written and added to the scripts.py for custom processing algorithms.  
@@ -198,10 +200,10 @@ Calculate the Amplitude and Phase (polar coordinates) from the input datasets X 
 > return new_R, new_Th    
         
 Then use this function in your Pre/Post-Script: 
-> def myNewModel_Post_Script(SENSOR_Object):    
-> new_R, new_Th = Amplitude_Phase(SENSOR_Object.df2, 'X1', 'Y1', 'R1 [uPa]', 'Theta1 [deg]')    
-> SENSOR_Object.addSubset(new_R, ['R1 [uPa]'], ['uPa'], df_index = [2,3])   
-> SENSOR_Object.addSubset(new_Th, ['Theta1 [deg]'], ['deg'], df_index = [2,3])
-> return SENSOR_Object    
+> def myNewModel_Post_Script(SENSOR_Object_df):    
+> new_R, new_Th = Amplitude_Phase(SENSOR_Object_df, 'X1', 'Y1', 'R1 [uPa]', 'Theta1 [deg]')    
+> SENSOR_Object_df.addSubset_to_df(new_R, 'R1 [uPa]')   
+> SENSOR_Object_df.addSubset_to_df(new_Th, 'Theta1 [deg]')
+> return SENSOR_Object_df    
 
 Last but not least, run main.py again and see if your scripts works :)
