@@ -13,7 +13,6 @@ def rename_key_in_dict(old_dict,old_name,new_name):
         new_dict[new_key] = old_dict[key]
     return new_dict
 
-
 class sensor_df(object):
     def __init__(self, df=pd.DataFrame()):
         """Initialize sensor dataframe object.
@@ -38,13 +37,16 @@ class sensor_df(object):
             columns_export = columns to export (list of str)
                         -1 = all columns (default)"""
         if columns_export==-1:
-            columns_export = self.df.columns.values.tolist().copy()
-        existing_column_names = []
-        for indx, val in enumerate(self.df.columns.values):
-            if columns_export.count(val)>0:
-                existing_column_names.append(val)    
-        # [f(x) if condition else g(x) for x in sequence]       
-        # existing_column_names = [val if (columns_export.count(val)>0) else '' for val in column_names.items()]       
+            existing_column_names = self.df.columns.values.tolist().copy()
+        elif columns_export==None:
+            existing_column_names = self.df.columns.values.tolist().copy()
+        else:
+            existing_column_names = []
+            for indx, val in enumerate(self.df.columns.values):
+                if columns_export.count(val)>0:
+                    existing_column_names.append(val)    
+            # [f(x) if condition else g(x) for x in sequence]       
+            # existing_column_names = [val if (columns_export.count(val)>0) else '' for val in column_names.items()]       
         return self.df.loc[pd.to_datetime(start):pd.to_datetime(end), existing_column_names]
    
     def dropDuplicates_in_df(self, column_to_check):  
@@ -52,7 +54,7 @@ class sensor_df(object):
             column_to_check = column to check for duplicates"""
         self.df = self.df.drop_duplicates(column_to_check)
     
-    def Linear_Modify_df(self, Column, A,B):# returns A*col[i]+B
+    def Linear_Modify_df(self, Column, A,B):
         """Linear modification of the given column in this dataframe.
             Column = column to modify (str)
             col_new[i] = A*col[i]+B"""
@@ -84,7 +86,7 @@ class sensor_df(object):
             df_other = dataframe to join (panda dataframe)
             new_name = new column name (string)"""
         given_name = df_other.columns[-1]       
-        self.df.join(df_other)
+        self.df = self.df.join(df_other)
         self.Rename_df_Column(given_name, new_name)
                 
     def Rename_df_Column(self, old_name, new_name):
@@ -116,10 +118,11 @@ class sensor_df(object):
             offset_end_index = end row index (optional)"""
         Occurence = False
         for k in range(offset_start_index,len(self.df[column])-offset_end_index):
-            if self.df[column][k].find(badword)>=0: # .find('') returns -1 if not found.
-                print('Warning: Removed row {row_k} due to corrupt data'.format(row_k=k))
-                Occurence = True
-                self.df.drop(labels=k,axis=0,inplace=True)
+            if type(self.df[column][k])==str:
+                if self.df[column][k].find(badword)>=0: # .find('') returns -1 if not found.
+                    print('Warning: Removed row {row_k} due to corrupt data'.format(row_k=k))
+                    Occurence = True
+                    self.df.drop(labels=k,axis=0,inplace=True)
         return Occurence
     
     def removeEmptyColumns_in_df(self):
@@ -134,7 +137,7 @@ class sensor_df(object):
                 
 class Sensor(object):
     _dfMax = 3
-    def __init__(self, sensorname, model, datafile, header=None, header_export=None, signal_units_dict={}, other_dict={},TimeColumn=None,TimeFormat=None,append_text= '',quotechar = '"', separator=None,skiprows=0,plotkey='',origin=pd.to_datetime('1900/01/01'), date_units='s'):
+    def __init__(self, sensorname, model, datafile, header=None, header_export=None, signal_units_dict={},TimeColumn=None,TimeFormat=None,quotechar = '"', separator=None,skiprows=0,plotkey='',origin=pd.to_datetime('1900/01/01'), date_units='s'):
         """Initialize sensor object.
         
         # =============================================================================
@@ -145,14 +148,12 @@ class Sensor(object):
             self.modelname :        model (str), see "model"_settings.ini files
             self.datapath :         path to datafiles (str), see config.ini file
             self.df1,               panda dataframe for all datas and all columns
-            self.df2,               panda dataframe for averaged datas and all columns
-            self.df3 :              panda dataframe for averaged datas and export columns
+            self.df2,               panda dataframe for averaged datas and export columns
+            self.df3 :              empty dataframe
             self.signals :          header list (overrides found header in file if provided)
-            self.signals_export :   signals to export (from self.signals)
-            self.signal_units_dict: signal units dictionary for any/all elements of self.signals
-            self.other_dict :       other dictionary for any/all elements 
-                                    of self.signals (e.g. wavelengths dictionary)
-            self.plotkey :          signal to plot (one of self.signals)
+            self.signals_export :   signals to export (from self.signals) (optional)
+            self.signal_units_dict: signal units dictionary for any/all elements of self.signals (optional)
+            self.plotkey :          signal to plot (one of self.signals) (optional)
         # =============================================================================  
         Inputs:
         # =============================================================================
@@ -162,46 +163,19 @@ class Sensor(object):
                                     ComPAS-V4, PMS1, MSPTI, miniPTI.
                                     Any other name can be used for initializing new datasets.
             datafile :              valid data path (str)
-            header = [] :           Override header row, length must match with columns. 
+            header = [] :           Override header row with another list (length must match with columns). 
                                     If header is None, first row will be used as column names.
             header_export = [] :    list for signals to export.
                                     if header_export is None, header_export = header
             signal_units_dict = {}: dictionary for units of signals.
                                     if signal_units_dict is None, a basic dictionary 
-                                    from the header list is created.
-            other_dict = {} :       other dictionary.
-                                    if other_dict is None, other_dict = {}
+                                    from the header list is created with all units empty ''.
             TimeColumn = '' :       Column with date time entries (str)
                                     if TimeFormat is set to 'DateTime_2Column', provide 2 column names 
                                     for date and time as a list, e.g. TimeColumn = ['Date','Time'].
             TimeFormat = '' :       'Excel', 'DateTime_1Column', 'DateTime_2Column', 'origin' or
-                                    ' Format = <custom format>'
-            # 
-            # TimeFormat:           Devices, Comments:
-            # 'Excel'               --> e.g. SMPS3080 Exported
-            # 'DateTime_1Column'    --> e.g. ComPAS, PMS ChinaSensor, miniPTI, MSPTI
-            # 'DateTime_2Column'    --> e.g. Aethalometer33
-            # ' Format = ... '      --> for custom time format, e.g. %%d.%%m.%%Y %%H:%%M:%%S for 28.12.2021 15:44:02
-            #                           see also 
-            #                           https://pandas.pydata.org/docs/reference/api/pandas.to_datetime.html
-            #                           https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior
-            #                        
-            # 'origin'              --> provide custom origin with pandas datetime, 
-            #                           e.g. pd.datetime('1900/01/01')
-            #                       --> and also provide date_units in this case!
-            #                          
-            # TimeFormat:           Examples:  
-            # 'Excel'               44543.44961
-            # 'DateTime_2Column'    2021/12/29 +{separator}+ 00:09:00
-            # 'DateTime_1Column'    16-12-2021 10:11:43
-            # 'DateTime_1Column'    14.12.2021 10:05:28
-            # 'Format = %%d.%%m.%%Y %%H:%%M:%%S' = 14.12.2021 10:05:28
-            # 'Format = %%d-%%m-%%Y %%H:%%M:%%S' = 16-12-2021 10:11:43
-
-            append_text = '' :      unknown feature - ask Alejandro Keller :D
-            
-            quotechar = '"' :       Char for quotations in datafile.
-            separator = '' :        separator in datafile, e.g ',' , '\t', ';' 
+                                    'Format = <custom format>'. See below for examples.
+            separator = '' :        separator in datafile, e.g ',', '\t', ';' 
                                     or None (=interpret file structure with python, default)
             skiprows = 0 :          skip first N rows of datafile.
             plotkey = '' :          Column to plot. Default is last column.
@@ -217,6 +191,32 @@ class Sensor(object):
                                     is an integer or float number. This will be based off the origin. 
                                     Example, with unit=’ms’ and origin=’unix’ (the default), this would 
                                     calculate the number of milliseconds to the unix epoch start.
+                                    
+            # Allowed Time Formats:
+            # TimeFormat:           Examples:
+            #
+            # 'Excel'               44543.44961
+            #                       number representing days past since...
+            #
+            # 'DateTime_1Column'    16-12-2021 10:11:43, or 14.12.2021 10:05:28
+            #                       Datetime will be infered from 1 column.
+            #
+            # 'DateTime_2Column'    2021/12/29 +{separator}+ 00:09:00
+            #                       Datetime will be infered from 2 columns.
+            #
+            #
+            # 'Format = ... '       for custom time format
+            #                       e.g. %%d.%%m.%%Y %%H:%%M:%%S for 28.12.2021 15:44:02
+            #                       Note: Use %% instead % in the .ini file.  
+            #                       'Format = %%d.%%m.%%Y %%H:%%M:%%S' = 14.12.2021 10:05:28
+            #                       'Format = %%d-%%m-%%Y %%H:%%M:%%S' = 16-12-2021 10:11:43
+            #                       See also: https://pandas.pydata.org/docs/reference/api/pandas.to_datetime.html
+            #                       https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior
+            #                        
+            # 'origin'              provide custom origin with pandas datetime, 
+            #                       e.g. pd.datetime('1900/01/01')
+            #                       --> and also provide date_units in this case: 'D', 's'
+            #                       
        # =============================================================================   
         """
 
@@ -235,11 +235,6 @@ class Sensor(object):
             
         #header_export_out = header_export
         signal_units_dict_out = signal_units_dict
-        other_dict_out = other_dict
-        #TimeColumn_out = TimeColumn
-        #TimeFormat_out = TimeFormat
-        append_text_out = append_text
-        quotechar_out= quotechar
         plotkey_out = plotkey
 
         # Init main sensor dataframe
@@ -248,7 +243,7 @@ class Sensor(object):
             index_col = False,
             names = header_out,         # use names=None to infer column names
             sep = separator_out,        # Space-separated value file.
-            quotechar = quotechar_out,  # double quote allowed as quote character
+            #quotechar = quotechar_out,  # double quote allowed as quote character
             skiprows = skiprows_out,    # Skip the first X row of the file
             engine = 'python'           # allows to use sep=None to find separator
             ))
@@ -286,7 +281,6 @@ class Sensor(object):
             raise Exception("Type of header_export has to be None or list.")
         
         
-            
         # If no signal units are provided, create a dictionary with header as keys and empty values
         if signal_units_dict == None:
             signal_units_dict_out = dict.fromkeys(header_out,'')
@@ -294,10 +288,6 @@ class Sensor(object):
         elif len(signal_units_dict_out.items())==0:
             signal_units_dict_out = dict.fromkeys(header_out,'')
  
-    
-        # If other dict is None, use empty dictionary
-        if other_dict == None:
-            other_dict_out = {}
         
         # If no plotkey is provided, use last column for plots
         
@@ -311,8 +301,6 @@ class Sensor(object):
             print('There is no plotkey named {pkey}'.format(pkey=plotkey))
             plotkey_out = header_out[-1]
             
-            
-
         
         # If TimeColumn is None, use first column for timestamp.
         if TimeColumn == None:
@@ -359,12 +347,6 @@ class Sensor(object):
                 if (key != TimeColumn_out) or (key != DateColumn_out):
                     self.df1.df[key] = self.df1.df[key].astype(float)
         
-        # if header_export_out.count(TimeColumn_out)>0:
-        #     header_export_out.remove(TimeColumn_out)
-        # if header_export_out.count(DateColumn_out)>0:
-        #     header_export_out.remove(DateColumn_out)
-
-        
         if TimeFormat_out == None: # if TimeFormat = None,: infer date time
             self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[TimeColumn_out], infer_datetime_format=True)
         elif TimeFormat_out in ['Excel']:
@@ -385,9 +367,7 @@ class Sensor(object):
         self.signals = header_out
         self.signals_export = header_export_out
         self.signal_units_dict = signal_units_dict_out
-        self.other_dict = other_dict_out
         self.plotkey = plotkey_out   
-        
         
         
     def getdf(self, df_index = 1):
@@ -410,7 +390,7 @@ class Sensor(object):
             df_index = 1(=default), 2 or 3"""    
         return self.getdf(df_index).getSubset_df(start,end,columns)
     
-    def Rename_sensor_signals(self, old_name, new_name, new_units=False, df_index=-1):
+    def Rename_sensor_signals(self, old_name, new_name, new_units=None, df_index=-1):
         """Rename a column/signal and all related attributes of a sensor_object.
             old_name = column/signal to modify (str)
             new_name = new name (str)
@@ -444,17 +424,10 @@ class Sensor(object):
         new_signal_dict = self.signal_units_dict.copy()
         units_keys = list(new_signal_dict.keys())
         if units_keys.count(old_name)>0: 
-            if new_units!=False:
+            if new_units!=None:
                 new_signal_dict[old_name] = new_units
             self.signal_units_dict = rename_key_in_dict(new_signal_dict,old_name,new_name)    
-            
-        # Check in other_dict:
-        new_other_dict = self.other_dict.copy()
-        other_keys = list(new_other_dict.keys())
-        if other_keys.count(old_name)>0: 
-            new_other_dict[old_name] = new_units
-            self.other_dict = rename_key_in_dict(new_other_dict,old_name,new_name)  
-            
+           
         # Check in plotkey
         if self.plotkey == old_name:
             self.plotkey = new_name
@@ -491,7 +464,6 @@ class Sensor(object):
             self.Rename_sensor_signals(name, new_name[indx], new_units[indx], df_index=df_index)
  
         
-        
     def removeSubset(self, column, df_index = -1):
         """Removes the given column from one/all sensor dataframes.
             column = column name (string)
@@ -513,12 +485,6 @@ class Sensor(object):
                 new_signals_dict.pop(column)
         self.signal_units_dict = new_signals_dict
         
-        new_other_dict = self.other_dict.copy()
-        if len(new_other_dict)>0:
-            if len(new_other_dict.get(column,[]))>0:
-                new_other_dict.pop(column)     
-        self.other_dict = new_other_dict
-                
         if df_index == -1:
             for i in range(self._dfMax):
                 self.getdf(i+1).removeColumn_from_df(column)

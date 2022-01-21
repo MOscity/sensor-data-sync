@@ -6,14 +6,17 @@ from classes import sensor_df,Sensor
 from functions import calculate_intervals,calculate_intervals_csv,create_plot,create_ini_file_from_dict, my_header_formatter
 from scripts import Check_Post_Scripts, Check_Pre_Scripts
 
+
 ## MAIN
 if __name__ == "__main__":
+    # Performance Check
+    start_time = datetime.now()
     
     # Default directory of the script
     default_dir = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0]))) + "/"
     
     # Default path to config.ini file
-    config_file = default_dir + "config.ini"
+    config_file = default_dir + "config23.ini"
     
     # Arguments
     parser = argparse.ArgumentParser(description='Sensors utilities')
@@ -29,18 +32,20 @@ if __name__ == "__main__":
                               'missing and config.ini is missing too.')
  
     args = parser.parse_args()
-        
-    # Check if a configuration file was provided
+     
+    # Check which configuration file was provided
     config_file = args.INI
     
     USE_BOOLS = []
     DATA_PATHS = []
     SETTINGS_PATHS = []
-    FULL_NAME_LIST = []
+    
+    # Change Number_Of_Sensors if you need more then 10 sensors, and then add accordingly new lines for
+    # data paths, settings path, use_sensor_i, etc. in config.ini (see pattern of the first 10 sensors).
     Number_Of_Sensors = 10
      
-    if os.path.exists(config_file):
-        config = configparser.ConfigParser()
+    config = configparser.ConfigParser()
+    if os.path.exists(config_file):    
         config.read(config_file)
         
         # INIT_SETTINGS
@@ -53,12 +58,12 @@ if __name__ == "__main__":
         TIME_FORMAT_NEW = eval(config['INIT_SETTINGS']['TIME_FORMAT_NEW'])
         SEPARATOR_NEW = eval(config['INIT_SETTINGS']['SEPARATOR_NEW'])
         
-        
         # OUTPUT_SETTINGS      
         FREQ = eval(config['OUTPUT_SETTINGS']['FREQ'])
         MODE = eval(config['OUTPUT_SETTINGS']['MODE'])
-        FILL_TIMES = eval(config['OUTPUT_SETTINGS']['FILL_TIMES'])
-        STACK_FIRST = eval(config['OUTPUT_SETTINGS']['STACK_FIRST'])
+        
+        BACK_FILL = eval(config['OUTPUT_SETTINGS']['BACK_FILL'])
+        FORMAT_OUTPUT_HEADER = eval(config['OUTPUT_SETTINGS']['FORMAT_OUTPUT_HEADER'])
         
         START_EXPORT = eval(config['OUTPUT_SETTINGS']['START_EXPORT'])
         END_EXPORT =  eval(config['OUTPUT_SETTINGS']['END_EXPORT'])
@@ -70,10 +75,10 @@ if __name__ == "__main__":
         
         FILE_PATH_SAVE_EXPORT = FILE_PATH_SAVE_EXPORT_0+'_{freq}{mode}.csv'.format(freq=FREQ,mode=MODE)
         if START_EXPORT!=None and END_EXPORT!=None:
-            START_PD = pd.to_datetime(START_EXPORT)
-            END_PD = pd.to_datetime(END_EXPORT)
-            START_EXPORT = START_PD.strftime('%d-%m-%Y')
-            END_EXPORT = END_PD.strftime('%d-%m-%Y')
+            START_PD = pd.to_datetime(START_EXPORT,format='%d.%m.%Y')
+            END_PD = pd.to_datetime(END_EXPORT,format='%d.%m.%Y')
+            START_EXPORT = START_PD.strftime('%Y-%m-%d')
+            END_EXPORT = END_PD.strftime('%Y-%m-%d')
             FILE_PATH_SAVE_STARTEND = FILE_PATH_SAVE_EXPORT_0+'_{freq}{mode}__{start}__{end}.csv'.format(freq=FREQ,mode=MODE,start=START_EXPORT,end=END_EXPORT)
         
         # GENERAL_SETTINGS and OUTPUT_SETTINGS
@@ -89,24 +94,25 @@ if __name__ == "__main__":
         INIT_NEW_SENSOR = False
         
         # OUTPUT_SETTINGS 
-        FREQ = 10
+        FREQ = 1
         MODE = 'min'
-        FILL_TIMES = False
-        STACK_FIRST = True
+        
+        BACK_FILL = True
+        FORMAT_OUTPUT_HEADER = True
         
         START_EXPORT = None
         END_EXPORT = None
         EXPORT_DAILY = False
         
-        FILE_PATH_SAVE_EXPORT = default_dir + 'output/Average_out_{freq}{mode}.csv'.format(freq=FREQ,mode=MODE)
+        FILE_PATH_SAVE_EXPORT = default_dir + 'output/Sample_Average_out_{freq}{mode}.csv'.format(freq=FREQ,mode=MODE)
         
         # GENERAL_SETTINGS and OUTPUT_SETTINGS                              
-        FILE_PATH_AETH   = default_dir + 'models_settings/AE33_sample.dat'
-        FILE_PATH_PMS = default_dir + 'models_settings/PMS1_sample.csv'
-        FILE_PATH_ComPAS = default_dir + 'models_settings/ComPASV4_sample.txt'
-        FILE_PATH_SMPS = default_dir + 'models_settings/SMPS3080_Export_sample.csv'
-        FILE_PATH_MSPTI = default_dir + 'models_settings/MSPTI_Export_sample.csv'
-        FILE_PATH_MINIPTI = default_dir + 'models_settings/miniPTI_Export_sample.csv'
+        FILE_PATH_AETH   = default_dir + 'sample_datas/AE33_sample.dat'
+        FILE_PATH_PMS = default_dir + 'sample_datas/PMS1_sample.csv'
+        FILE_PATH_ComPAS = default_dir + 'sample_datas/ComPASV4_sample.txt'
+        FILE_PATH_SMPS = default_dir + 'sample_datas/SMPS3080_Export_sample.csv'
+        FILE_PATH_MSPTI = default_dir + 'sample_datas/MSPTI_Export_sample.csv'
+        FILE_PATH_MINIPTI = default_dir + 'sample_datas/miniPTI_Export_sample.csv'
         
         SETTINGS_PATH_AETH   = default_dir + 'models_settings/AE33_settings.ini'
         SETTINGS_PATH_PMS = default_dir + 'models_settings/PMSChinaSensor_settings.ini'
@@ -115,15 +121,13 @@ if __name__ == "__main__":
         SETTINGS_PATH_MSPTI = default_dir + 'models_settings/MSPTI_settings.ini'
         SETTINGS_PATH_MINIPTI = default_dir + 'models_settings/miniPTI_settings.ini'
         
-        USE_BOOLS = [True, True, True, True, True, True]    
-        FULL_NAME_LIST = ['Aethalometer', 'PMS China Sensor', 'ComPAS', 'SMPS', 'MSPTI', 'miniPTI']
+        USE_BOOLS = [True, False, True, True, False, False]    
         DATA_PATHS = [FILE_PATH_AETH, FILE_PATH_PMS, FILE_PATH_ComPAS, FILE_PATH_SMPS, FILE_PATH_MSPTI, FILE_PATH_MINIPTI]
         SETTINGS_PATHS = [SETTINGS_PATH_AETH,SETTINGS_PATH_PMS,SETTINGS_PATH_ComPAS,SETTINGS_PATH_SMPS,SETTINGS_PATH_MSPTI,SETTINGS_PATH_MINIPTI]
         
         for k in range(7,Number_Of_Sensors+1):
             USE_BOOLS.append(False)
             DATA_PATHS.append(default_dir + 'model_settings/no_data.csv')
-            FULL_NAME_LIST.append('No Sensor')
             SETTINGS_PATHS.append(default_dir + 'model_settings/no_settings.ini')              
     
     
@@ -147,13 +151,10 @@ if __name__ == "__main__":
                           'skiprows' : SKIPROWS_NEW+1,
                           'TimeFormat' : TIME_FORMAT_NEW,
                           'TimeColumn' : TIME_COLUMN_NEW,
-                          'append_text' : '',
-                          'quotechar' : '"',
                           'plotkey' : header_out[-1],
                           'header' : header_out,
                           'header_export': header_out,
-                          'signal_units_dict': mySensor.signal_units_dict,
-                          'other_dict' : mySensor.other_dict
+                          'signal_units_dict': mySensor.signal_units_dict
                           }
         file_path_ini_out = "models_settings/{NewModel}_settings.ini".format(NewModel=MODELNAME_NEW)
         create_ini_file_from_dict(file_path_ini_out,create_ini_dict)
@@ -167,17 +168,17 @@ if __name__ == "__main__":
     
     # Else, process and synchronize
     else:
-        print('Synchronizing data...', file=sys.stderr)
+        print('Synchronizing data:', file=sys.stderr)
         print('Mode:\t\t\t', MODE, file=sys.stderr)
         print('Frequency:\t\t', FREQ, file=sys.stderr)
-        print('Fill_Times:\t\t', FILL_TIMES, file=sys.stderr)
+        print('Back Fill:\t\t', BACK_FILL, file=sys.stderr)
+        print('Format Header:\t', FORMAT_OUTPUT_HEADER, file=sys.stderr)
         print('------------------------', file=sys.stderr)
         
         for use_index, value in enumerate(USE_BOOLS):
             print('Sensor {ind}:\t\t'.format(ind=use_index+1),value, file=sys.stderr)
        
         # create new dataframe to merge all datas in (stack horizontally)
-        total_df = pd.DataFrame()
         total_sensor_df = sensor_df(pd.DataFrame())
         header_export_renamed = []
         
@@ -202,14 +203,11 @@ if __name__ == "__main__":
                 skiprows = eval(config['MODEL_SETTINGS']['skiprows'])
                 TimeFormat = eval(config['MODEL_SETTINGS']['TimeFormat'])
                 TimeColumn = eval(config['MODEL_SETTINGS']['TimeColumn'])
-                append_text = eval(config['MODEL_SETTINGS']['append_text'])
-                quotechar = eval(config['MODEL_SETTINGS']['quotechar'])
                 plotkey = eval(config['MODEL_SETTINGS']['plotkey'])
                 
                 header = eval(config['MODEL_SETTINGS']['header'])
                 header_export = eval(config['MODEL_SETTINGS']['header_export'])
                 signal_units_dict = eval(config['MODEL_SETTINGS']['signal_units_dict'])
-                other_dict = eval(config['MODEL_SETTINGS']['other_dict'])
                 
                 # if Time Format is 'origin', origin and date_units must be valid inputs
                 if TimeFormat in ['origin']:
@@ -231,8 +229,7 @@ if __name__ == "__main__":
                 print (">> {data_path}".format(data_path=Data_File[:slash_index]), file=sys.stderr)
                 
                 # create new dataframe if reading list of datasets, to append them (stack vertically)
-                events_df = pd.DataFrame()
-                events_sensor_df = sensor_df(events_df)
+                events_sensor_df = sensor_df(pd.DataFrame())
                 
                 list_of_events = glob.glob(Data_File) # * means all if need specific format then *.csv, or specific file start then <File Start>*
                 
@@ -243,66 +240,53 @@ if __name__ == "__main__":
                     print ("- {data} ".format(data=Data_File_Final[slash_index:] ), file=sys.stderr)
                    
                     # Crate Sensor Object with given parameters
-                    SENSOR_Object = Sensor(Sensor_Name,Model_Name,Data_File_Final,header=header,header_export=header_export,signal_units_dict=signal_units_dict,other_dict=other_dict,TimeColumn=TimeColumn,TimeFormat=TimeFormat,append_text=append_text,quotechar=quotechar,separator=separator, skiprows=skiprows, plotkey=plotkey, date_units=date_units,origin=origin)
+                    SENSOR_Object = Sensor(Sensor_Name,Model_Name,Data_File_Final,header=header,header_export=header_export,signal_units_dict=signal_units_dict,TimeColumn=TimeColumn,TimeFormat=TimeFormat,separator=separator, skiprows=skiprows, plotkey=plotkey, date_units=date_units,origin=origin)
 
-                    # Calibrations and custom Scripts before
-                    SENSOR_Object = Check_Pre_Scripts(SENSOR_Object)
+                    # Calibrations and custom Scripts before average
+                    SENSOR_Object.df1 = Check_Pre_Scripts(SENSOR_Object.df1, model_name=Model_Name)
                     
-                    # Calculate averages:  
-                    if args.CSV: # if CSV file is provided
-                        intervals_df_all = calculate_intervals_csv(args.CSV, SENSOR_Object.df1.df,column=SENSOR_Object.signals)
-                    else: # as config.ini or arguments given
-                        intervals_df_all = calculate_intervals(SENSOR_Object.df1,freq=FREQ,mode=MODE,column=SENSOR_Object.signals,decimals=9)
-                
                     # Calculate averages of export signals: 
                     if args.CSV: # if CSV file is provided
-                        intervals_df_export = calculate_intervals_csv(args.CSV, SENSOR_Object.df1.df,column=SENSOR_Object.signals_export)
+                        intervals_df_export = calculate_intervals_csv(args.CSV, SENSOR_Object.df1,column=SENSOR_Object.signals_export)
                     else: # as config.ini or arguments given
                         intervals_df_export = calculate_intervals(SENSOR_Object.df1,freq=FREQ,mode=MODE,column=SENSOR_Object.signals_export,decimals=9)
-                                     
-                    # replace df in object
-                    SENSOR_Object.df2.df = intervals_df_all
-                    SENSOR_Object.df3.df = intervals_df_export
-                    
+                   
+                    # Calibrations and custom Scripts after average
+                    if len(intervals_df_export)>0:
+                        SENSOR_Object.df2 = Check_Post_Scripts(sensor_df(intervals_df_export.copy()), model_name=Model_Name)
+                   
+                        # # Make 1 Graph, defined per plotkey
+                        if (SENSOR_Object.df2.df.columns.values.tolist().count(SENSOR_Object.plotkey)>0):
+                            y = SENSOR_Object.df2.df[SENSOR_Object.plotkey]
+                            plotTitle = "Sensor: {sensor_model}".format(sensor_model=Model_Name)
+                            if len(y)>0:
+                                if SENSOR_Object.signal_units_dict != None:
+                                    create_plot(y, yunits=SENSOR_Object.signal_units_dict.get(SENSOR_Object.plotkey, ''), title=plotTitle, ytitle=str(SENSOR_Object.plotkey))
+                                else:
+                                    create_plot(y, yunits='', title=plotTitle, ytitle=str(SENSOR_Object.plotkey))
+                            
+                        if BACK_FILL:
+                            SENSOR_Object.df2.df = SENSOR_Object.df2.df.backfill()
+                            SENSOR_Object.df2.df = SENSOR_Object.df2.df.ffill()
+                            
+                        # Join Dataframes and stack vertically   
+                        events_df = pd.concat([events_sensor_df.df, SENSOR_Object.df2.df]).sort_values('end')
+                        events_sensor_df = sensor_df(events_df)
+                        del(events_df)
+                        
                     # # Clear Memory
-                    del(intervals_df_all)
                     del(intervals_df_export)
                     
-                    # Calibrations and custom Scripts after averaging 
-                    SENSOR_Object = Check_Post_Scripts(SENSOR_Object)           
-                    
-                    # # For Debug purposes
-                    # SENSOR_Object.df1.df.to_csv(DATA_PATH_SAVE_EXPORT+'Debug_df1_{model}_{number}_id{id}.csv'.format(model=Model_Name,number=sensor_counts,id = event_id), sep=';', na_rep = 0, header=SENSOR_Object.df1.df.columns.values,quotechar = '#')
-                    # if event_id == 0:
-                    #     SENSOR_Object.df3.df.to_csv(DATA_PATH_SAVE_EXPORT+'Debug_df3_{model}_{number}_id{id}.csv'.format(model=Model_Name,number=sensor_counts,id = event_id), sep=';', na_rep = 0, header=SENSOR_Object.df3.df.columns.values,quotechar = '#')
-                    
-                    # # Remove time columns with 'start' timestamps. Optional...
-                    SENSOR_Object.removeSubset('start')   
-       
-                    # Update df   
-                    #intervals_df_all = SENSOR_Object.df2.df
-                    #intervals_df_export = SENSOR_Object.df3.df
-                    
-                    # # Make 1 Graph, defined per plotkey
-                    y = SENSOR_Object.df3.df[SENSOR_Object.plotkey]
-                    plotTitle = "Sensor: {sensor_model}".format(sensor_model=Model_Name)
-                    if len(y)>0:
-                        create_plot(y, yunits=SENSOR_Object.signal_units_dict.get(SENSOR_Object.plotkey, ''), title=plotTitle, ytitle=str(SENSOR_Object.plotkey))
-                    
-                    # Join Dataframes and stack vertically
-                    events_df = pd.concat([events_df, SENSOR_Object.df3.df])
-                    events_df = events_df.sort_values('end')
-                    events_sensor_df = sensor_df(events_df)
-                    
-                    
                     del(SENSOR_Object)
-                
-               
-                # # Remove time columns with 'start' timestamps. Optional... and redundant?
+                           
+                # # Remove time columns with 'start' timestamps.
                 events_sensor_df.removeColumn_from_df('start')   
                 total_sensor_df.removeColumn_from_df('start')  
                 
-                new_cols_to_add = my_header_formatter(events_sensor_df.df.columns.values.tolist())
+                if FORMAT_OUTPUT_HEADER:
+                    new_cols_to_add = my_header_formatter(events_sensor_df.df.columns.values.tolist())
+                else:
+                    new_cols_to_add = events_sensor_df.df.columns.values.tolist()
                 
                 for str_indx,str_value in enumerate(new_cols_to_add):
                     new_cols_to_add[str_indx] = '{}_'.format(Model_Name).replace('-','_') + str_value
@@ -310,34 +294,40 @@ if __name__ == "__main__":
                 
                 # # Join Dataframes and stack horizontally
                 total_df = total_sensor_df.df.join(events_sensor_df.df,rsuffix='_{}'.format(Model_Name),how='outer')
-                total_df = total_df.drop_duplicates()
-                    
+                
                 total_df = total_df.sort_values('end')
                 
-                # To implement as option:
-                #total_df = total_df.backfill()
-                #total_df = total_df.ffill()
+                # # If even more misssing data should be filled, uncomment this:
+                # if BACK_FILL:
+                #     total_df = total_df.backfill()
+                #     total_df = total_df.ffill()
+                
                 total_sensor_df = sensor_df(total_df)
-                
-                
+
                 # # Clear Memory
                 del(events_sensor_df)
                 del(total_df)
-    
-    
+        
+        # drop duplicate entries at the end
+        total_sensor_df.df = total_sensor_df.df.drop_duplicates()
+
         # # Save exports
         total_sensor_df.df.to_csv(FILE_PATH_SAVE_EXPORT, sep=';', header=header_export_renamed, na_rep = 0,quotechar = '#')
         
-        # # Save Time Subset of exports
-        subtotal_df = total_sensor_df.getSubset_df(START_PD,END_PD)
-        subtotal_df.to_csv(FILE_PATH_SAVE_STARTEND, sep=';', header=header_export_renamed, na_rep = 0,quotechar = '#')
-       
-        # # Clear Memory
-        del(subtotal_df)
         
+        # Options START_EXPORT and END_EXPORT are defined:
+        if START_EXPORT!=None and END_EXPORT!=None:
+            # # Save Time Subset of exports
+            subtotal_df = total_sensor_df.getSubset_df(START_PD,END_PD)
+            subtotal_df.to_csv(FILE_PATH_SAVE_STARTEND, sep=';', header=header_export_renamed, na_rep = 0,quotechar = '#')
+           
+            # # Clear Memory
+            del(subtotal_df)
+        
+        # Option EXPORT_DAILY is True:
         if EXPORT_DAILY and START_EXPORT!=None and END_EXPORT!=None:
-            START_EXPORT_Day = pd.to_datetime(START_EXPORT , format='%d-%m-%Y')
-            END_EXPORT_Day = pd.to_datetime(END_EXPORT , format='%d-%m-%Y')
+            START_EXPORT_Day = pd.to_datetime(START_EXPORT , format='%Y-%m-%d')
+            END_EXPORT_Day = pd.to_datetime(END_EXPORT , format='%Y-%m-%d')
             START_PD_N = START_EXPORT_Day
             
             dcount = 0
@@ -345,8 +335,8 @@ if __name__ == "__main__":
                 START_PD_N = START_EXPORT_Day + timedelta(days=dcount)
                 END_PD_N = START_EXPORT_Day + timedelta(days=dcount+1)
                 
-                START_EXPORT_N = START_PD_N.strftime('%d-%m-%Y')
-                END_EXPORT_N = END_PD_N.strftime('%d-%m-%Y')
+                START_EXPORT_N = START_PD_N.strftime('%Y-%m-%d')
+                END_EXPORT_N = END_PD_N.strftime('%Y-%m-%d')
                 
                 FILE_PATH_SAVE_STARTEND_N = FILE_PATH_SAVE_EXPORT_0+'_{freq}{mode}__{start}__{end}.csv'.format(freq=FREQ,mode=MODE,start=START_EXPORT_N,end=END_EXPORT_N)
             
@@ -354,7 +344,11 @@ if __name__ == "__main__":
                 subtotal_df = total_sensor_df.getSubset_df(START_PD_N,END_PD_N)
                 if len(subtotal_df) > 0:
                     subtotal_df.to_csv(FILE_PATH_SAVE_STARTEND_N, sep=';', header=header_export_renamed, na_rep = 0,quotechar = '#')
+                
+                # # Clear Memory
                 del(subtotal_df)
+                
+                # # Count Days
                 dcount +=1
                 
         # # Clear Memory
@@ -364,9 +358,12 @@ if __name__ == "__main__":
         print('Synchronization complete.', file=sys.stderr)
         print('------', file=sys.stderr)
         print ("\nAccess merged dataframe with total_sensor_df.<>,\nor see documentation with help(total_sensor_df)\nor clear memory with del(total_sensor_df).", file=sys.stderr)
+    
+    end_time = datetime.now()
+    print('------------------------', file=sys.stderr)
+    print('Done. Code executed in', end_time - start_time, file=sys.stderr)
 
 
-print('------------------------', file=sys.stderr)
-print('Done', file=sys.stderr)
+
 
 

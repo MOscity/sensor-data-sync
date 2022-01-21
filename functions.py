@@ -1,6 +1,9 @@
 from lib import rrule, timedelta, pd, register_matplotlib_converters, plt, mdates, FuncFormatter
 
-def my_header_formatter(header_list, replace_signs= ['[',']','{','}','(',')','$',':',';','.','-','#','&','/','\\','%','^']):
+def my_header_formatter(header_list, replace_signs= ['[',']','{','}','(',')','$',':',';','.','-','#','&','/','\\','%','^','°']):
+    """Formats header s.t. all special characters are replaced with '_'
+        This dataset is easier to import and modify in 'Veusz' : ) 
+        """
     export_header = header_list.copy()
     for l_indx,orig_value in enumerate(header_list):
         for r_indx,repl_value in enumerate(replace_signs):
@@ -8,6 +11,8 @@ def my_header_formatter(header_list, replace_signs= ['[',']','{','}','(',')','$'
                 export_header[l_indx] = export_header[l_indx].replace(repl_value, ' per ')
             elif repl_value == '%':
                 export_header[l_indx] = export_header[l_indx].replace(repl_value, ' percent ')
+            elif repl_value == '°':
+                export_header[l_indx] = export_header[l_indx].replace(repl_value, ' deg ')
             else:
                 export_header[l_indx] = export_header[l_indx].replace(repl_value, ' ')
         split_string = export_header[l_indx].split(' ')
@@ -15,7 +20,6 @@ def my_header_formatter(header_list, replace_signs= ['[',']','{','}','(',')','$'
             split_string.remove('')
         export_header[l_indx] = '_'.join(split_string)
     return export_header
-
 
 def my_date_formater(ax, delta):
     """Formats matplotlib axes 
@@ -60,11 +64,7 @@ def my_days_format_function(x, pos=None):
     label = x.strftime(fmt)
     return label
 
-# def LabView_to_DateTime(tlab):
-#     return datetime.fromtimestamp(tlab - 2082844800)
 
-# def ExcelTime_to_Datetime(texc):
-#     return datetime.fromordinal(datetime(1900, 1, 1).toordinal() + texc - 2)
 
 def create_ini_file_from_dict(filepath,dictionary):
     """Creates an .ini file from an dictionary.
@@ -224,7 +224,7 @@ def create_plot(y, x=None, yunits='##', title="mySensor", ytitle='eBC'):
 def calculate_intervals_csv(intervalfile, dataframe, decimals = 0 ,column=0, avg_mode=True, numerics_only=True):
     """Averages a dataframe and returns new dataframe with time intervals as defined in intervalfile.
         intervalfile =  file with interval., First row must be the column names (i.e. "start" and "end").
-        dataframe =     dataframe to average (pd.DataFrame)
+        dataframe =     sensor dataframe to average (sensor_df(pd.DataFrame))
         decimals =      decimal points to round mean/median value
         column =        columns to export as subset from dataframe
                         if column = 0, all columns are exported
@@ -235,12 +235,12 @@ def calculate_intervals_csv(intervalfile, dataframe, decimals = 0 ,column=0, avg
         returns pd.DataFrame
         """
     if column == 0:
-        column = dataframe.columns.values.tolist().copy()
+        column = dataframe.df.columns.values.tolist().copy()
     df = pd.read_csv(intervalfile,
                      index_col = False,
                      parse_dates=['start','end'])
     for index, row in df.iterrows():
-        subset = dataframe.df.getSubset_df(row['start'], row['end'], column)
+        subset = dataframe.getSubset_df(row['start'], row['end'], column)
         
         if avg_mode:
             columns_dict = dict(subset.mean(numeric_only=numerics_only))
@@ -253,10 +253,10 @@ def calculate_intervals_csv(intervalfile, dataframe, decimals = 0 ,column=0, avg
     return df
 
 
-def calculate_intervals(dataframe, freq = 1, mode = 'min', decimals = 0, column=0, fill_nonempty=True, avg_mode=True, numerics_only=True): 
+def calculate_intervals(dataframe, freq = 1, mode = 'min', decimals = 0, column=0, avg_mode=True, numerics_only=True): 
     """Averages a dataframe and returns new dataframe with equidistant time intervals of <freq> <mode>.
-        dataframe =     dataframe to average (pd.DataFrame)
-        freq =          interval distance
+        dataframe =     sensor dataframe to average (sensor_df(pd.DataFrame))
+        freq =          interval distance (int)
         mode =          interval units ('sec', 'min' or 'hours')
         decimals =      decimal points to round mean/median value
         column =        columns to export as subset from dataframe
@@ -269,6 +269,7 @@ def calculate_intervals(dataframe, freq = 1, mode = 'min', decimals = 0, column=
                         if False: ignores non-empty entries.
         returns pd.DataFrame
         """
+    freq = int(freq)
     df = pd.DataFrame(columns=['start','end'])
     
     if mode == 'sec':
@@ -291,12 +292,6 @@ def calculate_intervals(dataframe, freq = 1, mode = 'min', decimals = 0, column=
         end = dt+dt_0
         subset = dataframe.getSubset_df(start, end, column)
         
-        back_index = 0
-        if fill_nonempty: # if subset is empty roll back in time to get last non-zero subset
-            while (len(subset)==0 and back_index<=1500): 
-                subset = dataframe.getSubset_df(start-timedelta(minutes=back_index),end, column)
-                back_index+=1
-                
         index = len(df)
         df.loc[index, 'start'] = start
         df.loc[index, 'end'] = end
