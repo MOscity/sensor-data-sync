@@ -149,8 +149,8 @@ Configuration of sensors to use for processing/synchronization.
 
 - DATA_PATH_SENSOR_i, FILE_EXT_SENSOR_i, SETTINGS_SENSOR_i    
 Provide valid data directories, file path extensions and settings.ini for the sensors with USE_SENSOR_i = True.    
-File extensions with for example '*.csv' will use all datas ending with '.csv'  .  
-File extensions with for example 'AE33_AE33*' will use all datas starting with 'AE33_AE33'.    
+File extensions with for example '\*.csv' will use all datas ending with '.csv'  .  
+File extensions with for example 'AE33_AE33\*' will use all datas starting with 'AE33_AE33'.    
 Model Settings directory is in the same directory as this script and should not be moved.     
 Save new model settings in that directory and provide a valid path for SETTINGS_SENSOR_i (see other models as example).    
 
