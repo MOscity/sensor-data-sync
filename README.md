@@ -1,7 +1,5 @@
 # sensor-data-sync
-Processes and time-synchronizes several sensor datas with custom scripts.  
-
- Work in progress...  
+Time-synchronizes several sensor datas in the given time intervals, with optional custom scripts for pre- and post-processing.  
  
 Overview of Readme:  
 - 0.) Systems and Packages required   
@@ -21,11 +19,19 @@ b. Write your own Scripts
 c. Customize Scripts     
 
 ## 0.) Systems and Packages required  
-Python 3.6+  
+
+### Python 3.6+  
+
 configparser  
+argparse  
+sys   
+os   
+glob   
 pandas  
 numpy  
+dateutil  
 matplotlib  
+
 
 
 ## 1.) Setup new sensor model settings.ini
