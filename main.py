@@ -16,7 +16,7 @@ if __name__ == "__main__":
     default_dir = os.path.abspath(os.path.abspath(os.path.dirname(sys.argv[0]))) + "/"
     
     # Default path to config.ini file
-    config_file = default_dir + "config23.ini"
+    config_file = default_dir + "config.ini"
     
     # Arguments
     parser = argparse.ArgumentParser(description='Sensors utilities')
