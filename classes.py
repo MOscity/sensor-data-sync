@@ -81,13 +81,16 @@ class sensor_df(object):
         else:
             raise Exception("There is no column named {col}".format(col=Column))
             
-    def addSubset_to_df(self, df_other, new_name = 'New List'):
+    def addSubset_to_df(self, df_other, new_name = None):
         """Adds a dataframe (to the right) to this dataframe.
             df_other = dataframe to join (panda dataframe)
-            new_name = new column name (string)"""
-        given_name = df_other.columns[-1]       
+            new_name = new column name (list of str)"""
+        if new_name == None:
+            new_name = df_other.columns.values.tolist().copy()
+        else:
+            df_other.columns = new_name
+            
         self.df = self.df.join(df_other)
-        self.Rename_df_Column(given_name, new_name)
                 
     def Rename_df_Column(self, old_name, new_name):
         """Rename a column of this dataframe, if present.
@@ -348,19 +351,19 @@ class Sensor(object):
                     self.df1.df[key] = self.df1.df[key].astype(float)
         
         if TimeFormat_out == None: # if TimeFormat = None,: infer date time
-            self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[TimeColumn_out], infer_datetime_format=True)
+            self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[TimeColumn_out], infer_datetime_format=True, utc=False)
         elif TimeFormat_out in ['Excel']:
             # Datetime format is given from excel (example 44544.42951 is 2021-Dec-14. 10:18:29.664)
-            self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[TimeColumn_out], unit='D', origin=pd.to_datetime('1900/01/01'))
-            self.df1.df['Datetime'] = pd.to_datetime(self.df1.df['Datetime']) - pd.to_timedelta(2, unit='D') # subtract 2 additional days 
+            self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[TimeColumn_out], unit='D', origin=pd.to_datetime('1899/12/31'), utc=False)
+            #self.df1.df['Datetime'] = pd.to_datetime(self.df1.df['Datetime'], utc=True) - pd.to_timedelta(2, unit='D') # subtract 2 additional days 
         elif TimeFormat_out in ['DateTime_2Column']:
-            self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[DateColumn_out] + " " + self.df1.df[TimeColumn_out], infer_datetime_format=True)
+            self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[DateColumn_out] + " " + self.df1.df[TimeColumn_out], infer_datetime_format=True, utc=False)
         elif TimeFormat_out in ['origin']:
-            self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[TimeColumn_out], unit=date_units, origin=origin)
+            self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[TimeColumn_out], unit=date_units, origin=origin, utc=False)
         elif TimeFormat_out[:9] == 'Format = ':
-            self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[TimeColumn_out], infer_datetime_format=False, format=TimeFormat_out[9:] )
+            self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[TimeColumn_out], infer_datetime_format=False, format=TimeFormat_out[9:], utc=False )
         else: # if 'DateTime_1Column' : infer date time
-            self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[TimeColumn_out], infer_datetime_format=True)
+            self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[TimeColumn_out], infer_datetime_format=True, utc=False )
         
         self.df1.df = self.df1.df.set_index('Datetime')
  
@@ -390,7 +393,7 @@ class Sensor(object):
             df_index = 1(=default), 2 or 3"""    
         return self.getdf(df_index).getSubset_df(start,end,columns)
     
-    def Rename_sensor_signals(self, old_name, new_name, new_units=None, df_index=-1):
+    def Rename_sensor_signal(self, old_name, new_name, new_units=None, df_index=-1):
         """Rename a column/signal and all related attributes of a sensor_object.
             old_name = column/signal to modify (str)
             new_name = new name (str)
@@ -402,7 +405,7 @@ class Sensor(object):
                 self.getdf(i+1).Rename_df_Column(old_name, new_name)
         elif type(df_index)==list:
             for ind in df_index:
-                self.getdf(df_index).Rename_df_Column(old_name, new_name)
+                self.getdf(ind).Rename_df_Column(old_name, new_name)
         else:
             self.getdf(df_index).Rename_df_Column(old_name, new_name)
             
@@ -432,19 +435,27 @@ class Sensor(object):
         if self.plotkey == old_name:
             self.plotkey = new_name
     
-    def addSubset(self, df_other, new_name = ['New List'], new_units=[' '], df_index = -1):
+    def addSubset(self, df_other, new_name = None, new_units=None, df_index = -1):
         """Adds a dataframe (to the right) to one/all sensor dataframes.
             df_other = dataframe to join (panda dataframe)
             new_name = new column name (string)
             new_units = new units for sensor object
             df_index = 1,2,3, or -1(=all, default)
-            KNOWN ISSUE: Improve code for whole dataframes, currently only single column dataframes supported..."""
+            """
+        if new_name == None:
+            new_name = df_other.columns.values.tolist().copy()
+        else:
+            df_other.columns = new_name
+            
+        if new_units == None:
+            new_units = ['' for k in range(len(new_name))]
+
         if df_index == -1:
             for i in range(self._dfMax):
                 self.getdf(i+1).df = self.getdf(i+1).df.join(df_other)
         elif type(df_index)==list:
             for ind in df_index:
-                self.getdf(ind+1).df = self.getdf(ind+1).df.join(df_other)
+                self.getdf(ind).df = self.getdf(ind).df.join(df_other)
         else:
             self.getdf(df_index).df = self.getdf(df_index).df.join(df_other)
         
@@ -461,8 +472,6 @@ class Sensor(object):
             self.signals = signal_names
             self.signals_export = export_signals
             
-            self.Rename_sensor_signals(name, new_name[indx], new_units[indx], df_index=df_index)
- 
         
     def removeSubset(self, column, df_index = -1):
         """Removes the given column from one/all sensor dataframes.
@@ -490,7 +499,7 @@ class Sensor(object):
                 self.getdf(i+1).removeColumn_from_df(column)
         elif type(df_index)==list:
             for ind in df_index:
-                self.getdf(ind+1).removeColumn_from_df(column)
+                self.getdf(ind).removeColumn_from_df(column)
         else:
             self.getdf(df_index).removeColumn_from_df(column)
             
@@ -507,7 +516,7 @@ class Sensor(object):
                 self.getdf(i+1).dropDuplicates_in_df(column) 
         elif type(df_index)==list:
             for ind in df_index:
-                self.getdf(ind+1).dropDuplicates_in_df(column) 
+                self.getdf(ind).dropDuplicates_in_df(column) 
         else:
             self.getdf(df_index).dropDuplicates_in_df(column) 
              
@@ -522,7 +531,7 @@ class Sensor(object):
                 self.getdf(i+1).Linear_Modify_df(Column, A, B)
         elif type(df_index)==list:
             for ind in df_index:
-                self.getdf(ind+1).Linear_Modify_df(Column, A, B)
+                self.getdf(ind).Linear_Modify_df(Column, A, B)
         else:
             self.getdf(df_index).Linear_Modify_df(Column, A, B)
 
@@ -540,6 +549,6 @@ class Sensor(object):
                 self.getdf(i+1).NPoly_Modify_df(Column, a_n)
         elif type(df_index)==list:
             for ind in df_index:
-                self.getdf(ind+1).NPoly_Modify_df(Column, a_n)
+                self.getdf(ind).NPoly_Modify_df(Column, a_n)
         else:
             self.getdf(df_index).NPoly_Modify_df(Column, a_n)
