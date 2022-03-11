@@ -56,7 +56,8 @@ or "," , "\t", ";", " " ...
 
 - TIME_FORMAT_NEW       
 Time Format for the time datas.   
-Allowed Formats: None, 'Excel', 'DateTime_1Column', 'DateTime_2Column', 'origin' or 'Format = <>'.  
+Allowed Formats: None, 'Excel', 'DateTime_1Column', 'DateTime_2Column', 'origin' or 'Format = <>'. 
+Works best with 'Format = <>'.  
 For example: 'Format = %%d.%%m.%%Y %%H:%%M:%%S' for 30.12.2021 15:45:10.  
 Or 'Format = %%d/%%m/%%Y”, note that “%%f” will parse all the way up to nanoseconds.    
 Note that in this .ini file one must write '%%' instead of '%'.   
@@ -81,7 +82,7 @@ ID Name to recognize the model.
 Separator in the dataset, use None to interpret datas with python-interpreter   
 or "," , "\t", ";", " " ...   
 
-- skiprows : 2      
+- skiprows : 0     
 Skip rows before header / first row of datas.
 If a header is provided (!=None), one additional line will be skipped.
 
@@ -118,20 +119,27 @@ Freq: any integer > 0 for the equidistant time intervals.
 
 - MODE: 'min'     
 Mode: sec, min or hours for the units of the time intervals.    
-
+  
 - DATA_PATH_SAVE_EXPORT & FILE_EXT_SAVE_EXPORT:     
 Path for the output files    
-
-- BACK_FILL : True/False   
-if True, missing values in exported dataframe will be filled (backward).  
-if False, missing values will be replaced with 0's.      
-
+  
+- FORWARD_FILL: True/False     
+if True, missing values in exported dataframe will be filled (forward in time).    
+if False, missing values will be replaced with 0's.           
+  
+- BACKWARD_FILL: True/False   
+if True, missing values in exported dataframe will be filled (backward in time).    
+if False, missing values will be replaced with 0's.     
+                 
+- FIRST_FORWARD: True/False   
+if FORWARD_FILL & BACKWARD_FILL is true, choose which is applied first:   
+if True, missing values will be first filled forward in time, then additionally backward (if any values are still missing)  
+  
 - FORMAT_OUTPUT_HEADER : True/False    
 Format output header: If True, all special characters (e.g. /.:&° etc) will be replaced with _   
 Note: It is then easier to import the data in 'Veusz'.   
 If False, exported header will be as in the original datafiles or as defined in model_settings.ini   
-
-
+  
 - START_EXPORT & END_EXPORT     
 Start and End Datetime for Export: if provided (if not None), an additional export file will be created     
 containing only data between the given start and end time.        
@@ -139,40 +147,40 @@ Note: All datas defined in config.ini > General_Settings will be read anyway, in
 Note: Format must be 'dd.mm.YYYY' (str), e.g.:     
 START_EXPORT : '8.12.2021'    
 END_EXPORT : '22.12.2021'    
-
+  
 - EXPORT_DAILY: True/False    
 Export Daily: if true and START_EXPORT & END_EXPORT is provided, additional files will be created    
 for every day between START_EXPORT and END_EXPORT  
-
+  
 - USE_SENSOR_i : True/False     
 Configuration of sensors to use for processing/synchronization.     
-
+  
 - DATA_PATH_SENSOR_i, FILE_EXT_SENSOR_i, SETTINGS_SENSOR_i    
 Provide valid data directories, file path extensions and settings.ini for the sensors with USE_SENSOR_i = True.    
 File extensions with for example '\*.csv' will use all datas ending with '.csv'  .  
 File extensions with for example 'AE33_AE33\*' will use all datas starting with 'AE33_AE33'.    
 Model Settings directory is in the same directory as this script and should not be moved.     
 Save new model settings in that directory and provide a valid path for SETTINGS_SENSOR_i (see other models as example).    
-
+   
 ### b.) Run main.py  
 Run main.py with optional arguments     
-
+   
 - '--inifile' :     
 Path to configuration (.ini) file. "default-directory"/config.ini if omitted    
-
+   
 - '--intervals' :     
 csv file with start and end timestamps columns. First row must be the column names (i.e. "start" and "end").      
 Uses intervals as defined in config.ini if this argument is not provided.     
 Uses 10 minute intervals if this argument is missing and config.ini is missing too.  
-
+   
 ## 3.) Create Custom Scripts (optional)  
 If you like to use python library for data processing (instead of Excel, R, MatLab or similar),          
 you can write your own python scripts for pre- or post-processing of the data (before or after the averaging).   
-
+   
 ### a.) Add your model to the functions Check_Pre_Scripts and Check_Post_Scripts in scripts.py       
 Open scripts.py and add your model name to the list of Check_Pre_Scripts and Check_Post_Scripts.        
 'myNewModel' has to match exactly the 'model' name defined in /models_settings/myModel_settings.ini.   
-
+  
 for example:  
 in Check_Pre_Scripts add the lines (in between the other elif-statements):  
 > elif model_name == 'myNewModel':   
@@ -200,16 +208,16 @@ For more functionality, see library of pandas dataframe. New custom functions ca
 
 For example:   
 Calculate the Amplitude and Phase (polar coordinates) from the input datasets X and Y (cartesian coordinates) and return the new dataframes:     
-> def Amplitude_Phase(sensor_df,X_Column,Y_Column,R_Name,Theta_Name):      
-> new_R = pd.DataFrame({R_Name: np.sqrt(sensor_df.df[X_Column]**2+sensor_df.df[Y_Column]**2)},index=sensor_df.df.index)   
-> new_Th = pd.DataFrame({Theta_Name: np.arctan2(sensor_df.df[Y_Column],sensor_df.df[X_Column])*180.0/np.pi},index=sensor_df.df.index)   
+> def Amplitude_Phase(sensor_df,X_Column,Y_Column,R_Name,Theta_Name):       
+> new_R = pd.DataFrame({R_Name: np.sqrt(sensor_df.df[X_Column]**2+sensor_df.df[Y_Column]**2)},index=sensor_df.df.index)    
+> new_Th = pd.DataFrame({Theta_Name: np.arctan2(sensor_df.df[Y_Column],sensor_df.df[X_Column])*180.0/np.pi},index=sensor_df.df.index)    
 > return new_R, new_Th    
         
-Then use this function in your Pre/Post-Script: 
-> def myNewModel_Post_Script(SENSOR_Object_df):    
-> new_R, new_Th = Amplitude_Phase(SENSOR_Object_df, 'X1', 'Y1', 'R1 [uPa]', 'Theta1 [deg]')    
-> SENSOR_Object_df.addSubset_to_df(new_R, 'R1 [uPa]')   
-> SENSOR_Object_df.addSubset_to_df(new_Th, 'Theta1 [deg]')
-> return SENSOR_Object_df    
+Then use this function in your Pre/Post-Script:  
+> def myNewModel_Post_Script(SENSOR_Object_df):     
+> new_R, new_Th = Amplitude_Phase(SENSOR_Object_df, 'X1', 'Y1', 'R1 [uPa]', 'Theta1 [deg]')     
+> SENSOR_Object_df.addSubset_to_df(new_R, 'R1 [uPa]')     
+> SENSOR_Object_df.addSubset_to_df(new_Th, 'Theta1 [deg]') 
+> return SENSOR_Object_df     
 
-Last but not least, run main.py again and see if your scripts works :)
+Last but not least, run main.py again and see if your scripts works :)  
