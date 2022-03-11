@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 
 import numpy as np
 import pandas as pd
+import allantools
 from pandas.plotting import register_matplotlib_converters
 
 import matplotlib.pyplot as plt
