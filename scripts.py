@@ -6,7 +6,7 @@ def Amplitude_Phase(SENSOR_Object_df,X_Column,Y_Column,R_Name,Theta_Name):
     return new_R, new_Th
 
 def Check_Pre_Scripts(SENSOR_Object):
-    model_name = SENSOR_Object.modelname
+    model_name = SENSOR_Object.modelname   
     if model_name == 'AE33':
         return Aeth33_Pre_Script(SENSOR_Object)
     elif model_name == 'AE31':
