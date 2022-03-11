@@ -1,6 +1,6 @@
 import lib
 from lib import sys, os, glob, configparser, argparse
-from lib import pd, datetime, timedelta
+from lib import pd, datetime, timedelta, allantools, np
 
 from classes import sensor_df, Sensor
 from functions import calculate_intervals, calculate_intervals_csv, create_plot, create_ini_file_from_dict, my_header_formatter
@@ -16,7 +16,7 @@ if __name__ == "__main__":
         os.path.abspath(os.path.dirname(sys.argv[0]))) + "/"
 
     # Default path to config.ini file
-    config_file = default_dir + "config.ini"
+    config_file = default_dir + "config_3.ini"
 
     # Arguments
     parser = argparse.ArgumentParser(description='Sensors utilities')
@@ -61,9 +61,12 @@ if __name__ == "__main__":
         FREQ = eval(config['OUTPUT_SETTINGS']['FREQ'])
         MODE = eval(config['OUTPUT_SETTINGS']['MODE'])
 
-        BACK_FILL = eval(config['OUTPUT_SETTINGS']['BACK_FILL'])
+        FORWARD_FILL = eval(config['OUTPUT_SETTINGS']['FORWARD_FILL'])
+        BACKWARD_FILL = eval(config['OUTPUT_SETTINGS']['BACKWARD_FILL'])
+        FIRST_FORWARD = eval(config['OUTPUT_SETTINGS']['FIRST_FORWARD'])
+        
         FORMAT_OUTPUT_HEADER = eval(config['OUTPUT_SETTINGS']['FORMAT_OUTPUT_HEADER'])
-
+      
         START_EXPORT = eval(config['OUTPUT_SETTINGS']['START_EXPORT'])
         END_EXPORT = eval(config['OUTPUT_SETTINGS']['END_EXPORT'])
         EXPORT_DAILY = eval(config['OUTPUT_SETTINGS']['EXPORT_DAILY'])
@@ -94,9 +97,12 @@ if __name__ == "__main__":
 
         # OUTPUT_SETTINGS
         FREQ = 10
-        MODE = 'min'
+        MODE = 'sec'
 
-        BACK_FILL = True
+        FORWARD_FILL = True
+        BACKWARD_FILL = True
+        FIRST_FORWARD = True
+        
         FORMAT_OUTPUT_HEADER = True
 
         START_EXPORT = None
@@ -169,7 +175,7 @@ if __name__ == "__main__":
         print('Synchronizing data', file=sys.stderr)
         print('Mode:\t\t\t', MODE, file=sys.stderr)
         print('Frequency:\t\t', FREQ, file=sys.stderr)
-        print('Back Fill:\t\t', BACK_FILL, file=sys.stderr)
+        print('Back Fill:\t\t', BACKWARD_FILL, file=sys.stderr)
         print('Format Header:\t', FORMAT_OUTPUT_HEADER, file=sys.stderr)
         print('------------------------', file=sys.stderr)
 
@@ -273,11 +279,17 @@ if __name__ == "__main__":
                                     create_plot(y, yunits=SENSOR_Object.signal_units_dict.get(SENSOR_Object.plotkey, ''), title=plotTitle, ytitle=str(SENSOR_Object.plotkey))
                                 else:
                                     create_plot(y, yunits='', title=plotTitle, ytitle=str(SENSOR_Object.plotkey))
-
-                        if BACK_FILL:
-                            SENSOR_Object.df2.df = SENSOR_Object.df2.df.backfill()
+                        
+                        
+                        if FIRST_FORWARD and FORWARD_FILL:
                             SENSOR_Object.df2.df = SENSOR_Object.df2.df.ffill()
-
+                        
+                        if BACKWARD_FILL:
+                            SENSOR_Object.df2.df = SENSOR_Object.df2.df.backfill()
+                          
+                        if (not FIRST_FORWARD) and FORWARD_FILL:
+                            SENSOR_Object.df2.df = SENSOR_Object.df2.df.ffill()
+                            
                         # Join Dataframes and stack vertically
                         events_df = pd.concat([events_sensor_df.df, SENSOR_Object.df2.df]).sort_values('end')
                         events_sensor_df = sensor_df(events_df)
@@ -285,13 +297,14 @@ if __name__ == "__main__":
 
                     # # Clear Memory
                     del(intervals_df_export)
-
                     del(SENSOR_Object)
 
                 # # Remove time columns with 'start' timestamps.
                 events_sensor_df.removeColumn_from_df('start')
                 total_sensor_df.removeColumn_from_df('start')
 
+
+                # # Format Header
                 if FORMAT_OUTPUT_HEADER:
                     new_cols_to_add = my_header_formatter(events_sensor_df.df.columns.values.tolist())
                 else:
@@ -307,9 +320,9 @@ if __name__ == "__main__":
                 total_df = total_df.sort_values('end')
 
                 # # If even more misssing data should be filled, uncomment this:
-                # if BACK_FILL:
-                #     total_df = total_df.backfill()
-                #     total_df = total_df.ffill()
+                #
+                # total_df = total_df.backfill()
+                # total_df = total_df.ffill()
 
                 total_sensor_df = sensor_df(total_df)
 
@@ -322,6 +335,24 @@ if __name__ == "__main__":
 
         # # Save exports
         total_sensor_df.df.to_csv(FILE_PATH_SAVE_EXPORT, sep=';',header=header_export_renamed, na_rep=0, quotechar='#')
+
+
+# =============================================================================
+#         # # Calculate Allan Deviation of a signal:
+#         #
+#         # if MODE == 'sec':
+#         #     rates = FREQ
+#         # elif MODE == 'min':
+#         #     rates = FREQ*60
+#         # else:
+#         #     rates = FREQ*60*24
+#         
+#         # data_all = total_sensor_df.df['R1 [uPa]'].tolist()
+#         # (taus_out_all, ad_all, ade_all, adn_all) = allantools.oadev(data_all, rate=1.0/rates, data_type="freq", taus="all")
+#         # allan_df_all = pd.DataFrame({'Taus_min_all': taus_out_all/60, 'ad_all': ad_all, 'ad_error_all': ade_all, 'ad_number_all': adn_all})   
+#         # allan_df_all.to_csv(DATA_PATH_SAVE_EXPORT+'/'+FILE_EXT_SAVE_EXPORT_0+'_{freq}{mode}__AllanDeviation_All.csv'.format(freq=FREQ,mode=MODE), sep=';', na_rep=0, quotechar='#')
+# 
+# =============================================================================
 
         # Options START_EXPORT and END_EXPORT are defined:
         if START_EXPORT != None and END_EXPORT != None:

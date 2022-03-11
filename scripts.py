@@ -1,4 +1,4 @@
-from lib import np, pd
+from lib import np, pd, allantools
 
 def Amplitude_Phase(SENSOR_Object_df,X_Column,Y_Column,R_Name,Theta_Name):    
     new_R = pd.DataFrame({R_Name: np.sqrt(SENSOR_Object_df.df[X_Column]**2+SENSOR_Object_df.df[Y_Column]**2)},index=SENSOR_Object_df.df.index)
@@ -92,18 +92,18 @@ def ComPASV4_Pre_Script(SENSOR_Object):
     
     # Method for value hold while Background Measurement is active (via boolean comparison)
     Copy_df = SENSOR_Object.df1.df[['BKG Meas. Active','X1','Y1','Amplitude 1 [uPa]','Phase 1 [deg]',
-                                               'X2','Y2','Amplitude 2 [uPa]','Phase 2 [deg]',
-                                               'Blue A Mov. Avg [uPa]','Blue P Mov. Avg [deg]',
-                                               'Green A Mov. Avg [uPa]','Green P Mov. Avg [deg]',
-                                               'Red A Mov. Avg [uPa]','Red P Mov. Avg [deg]']].copy()
+                                                'X2','Y2','Amplitude 2 [uPa]','Phase 2 [deg]',
+                                                'Blue A Mov. Avg [uPa]','Blue P Mov. Avg [deg]',
+                                                'Green A Mov. Avg [uPa]','Green P Mov. Avg [deg]',
+                                                'Red A Mov. Avg [uPa]','Red P Mov. Avg [deg]']].copy()
     Copy_df.loc[Copy_df['BKG Meas. Active']>0, Copy_df.columns] = None
     Copy_df = Copy_df.ffill()
     Copy_df.pop('BKG Meas. Active')
     SENSOR_Object.addSubset(Copy_df, ['X1 VH','Y1 VH','Amplitude 1 VH [uPa]', 'Phase 1 VH [deg]', 
-                                               'X2 VH','Y2 VH','Amplitude 2 VH [uPa]','Phase 2 VH [deg]',
-                                               'Blue A Mov. Avg VH [uPa]', 'Blue P Mov. Avg VH [deg]', 
-                                               'Green A Mov. Avg VH [uPa]', 'Green P Mov. Avg VH [deg]', 
-                                               'Red A Mov. Avg VH [uPa]', 'Red P Mov. Avg VH [deg]'],
+                                                'X2 VH','Y2 VH','Amplitude 2 VH [uPa]','Phase 2 VH [deg]',
+                                                'Blue A Mov. Avg VH [uPa]', 'Blue P Mov. Avg VH [deg]', 
+                                                'Green A Mov. Avg VH [uPa]', 'Green P Mov. Avg VH [deg]', 
+                                                'Red A Mov. Avg VH [uPa]', 'Red P Mov. Avg VH [deg]'],
                                                 df_index = 1)
     
     return SENSOR_Object
@@ -146,10 +146,24 @@ def ComPASV4_Post_Script(SENSOR_Object):
     return SENSOR_Object
 
 
-def ComPASV5_Pre_Script(SENSOR_Object):
+def ComPASV5_Pre_Script(SENSOR_Object):  
     return SENSOR_Object
 
 def ComPASV5_Post_Script(SENSOR_Object):
+    new_R1, new_Th1 = Amplitude_Phase(SENSOR_Object.df2, 'X1', 'Y1', 'R1 [uPa]', 'Theta1 [deg]')
+    SENSOR_Object.addSubset(new_R1/214.7483648, ['R1 [uPa]'],new_units=['uPa'],df_index=2) # Scale R to uPa
+    SENSOR_Object.addSubset(new_Th1, ['Theta1 [deg]'],new_units=['deg'],df_index=2) # Theta in deg
+
+    new_R2, new_Th2 = Amplitude_Phase(SENSOR_Object.df2, 'X2', 'Y2', 'R2 [uPa]', 'Theta2 [deg]')
+    SENSOR_Object.addSubset(new_R2/214.7483648, ['R2 [uPa]'],new_units=['uPa'],df_index=2) # Scale R to uPa
+    SENSOR_Object.addSubset(new_Th2, ['Theta2 [deg]'],new_units=['deg'],df_index=2) # Theta in deg
+
+    
+    # SENSOR_Object.df2.df['BKG Meas. Active'] = SENSOR_Object.df2.df['BKG Meas. Active'].astype(bool)
+    # SENSOR_Object.df2.df['BKG Meas. Active'] = SENSOR_Object.df2.df['BKG Meas. Active'].astype(float)
+
+    SENSOR_Object.plotkey = 'R1 [uPa]'
+
     return SENSOR_Object
     
 
