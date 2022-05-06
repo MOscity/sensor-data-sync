@@ -16,7 +16,7 @@ if __name__ == "__main__":
         os.path.abspath(os.path.dirname(sys.argv[0]))) + "/"
 
     # Default path to config.ini file
-    config_file = default_dir + "config_3.ini"
+    config_file = default_dir + "config.ini"
 
     # Arguments
     parser = argparse.ArgumentParser(description='Sensors utilities')
@@ -136,7 +136,7 @@ if __name__ == "__main__":
             SETTINGS_PATHS.append(default_dir + 'model_settings/no_settings.ini')
 
     # Initializiation Complete
-    print('------------------------', file=sys.stderr)
+    print('---------------------------------', file=sys.stderr)
 
     # if New Sensor initialization is true, skip averaging process etc.
     if INIT_NEW_SENSOR:
@@ -147,14 +147,33 @@ if __name__ == "__main__":
 
         print("Reading {Sensor_Name} data, model {sensor_model}.".format(Sensor_Name=Sensor_Name, sensor_model=MODELNAME_NEW), file=sys.stderr)
 
-        mySensor = Sensor(Sensor_Name, MODELNAME_NEW, FILE_PATH_NEW, skiprows=SKIPROWS_NEW, TimeColumn=TIME_COLUMN_NEW, TimeFormat=TIME_FORMAT_NEW)
+        # if Time Format is 'origin', origin and date_units must be valid inputs
+        if TIME_FORMAT_NEW in ['origin']:
+            DATE_UNITS_NEW = eval(config['INIT_SETTINGS']['DATE_UNITS_NEW'])
+            ORIGIN_NEW = eval(config['INIT_SETTINGS']['ORIGIN_NEW'])
+            if ORIGIN_NEW == 'creation_day_of_file':
+                ORIGIN_NEW = pd.to_datetime(datetime.fromtimestamp(
+                    os.path.getctime(FILE_PATH_NEW)).strftime('%d-%m-%Y %H:%M:%S'))
+            elif ORIGIN_NEW == 'modification_day_of_file':
+                ORIGIN_NEW = pd.to_datetime(datetime.fromtimestamp(
+                    os.path.getmtime(FILE_PATH_NEW)).strftime('%d-%m-%Y %H:%M:%S'))
+            else:
+                ORIGIN_NEW = pd.to_datetime(ORIGIN_NEW)
+        else:
+            # Use default values
+            DATE_UNITS_NEW = 'D'
+            ORIGIN_NEW = pd.to_datetime('1900/01/01')
+            
+        mySensor = Sensor(Sensor_Name, MODELNAME_NEW, FILE_PATH_NEW, skiprows=SKIPROWS_NEW, TimeColumn=TIME_COLUMN_NEW, TimeFormat=TIME_FORMAT_NEW, origin=ORIGIN_NEW, date_units=DATE_UNITS_NEW)
         header_out = list(mySensor.signals)
 
         create_ini_dict = {'model': MODELNAME_NEW,
                            'separator': SEPARATOR_NEW,
-                           'skiprows': SKIPROWS_NEW+1,
+                           'skiprows': SKIPROWS_NEW,
                            'TimeFormat': TIME_FORMAT_NEW,
                            'TimeColumn': TIME_COLUMN_NEW,
+                           'origin': ORIGIN_NEW,
+                           'date_units' : DATE_UNITS_NEW,
                            'plotkey': header_out[-1],
                            'header': header_out,
                            'header_export': header_out,
@@ -173,11 +192,13 @@ if __name__ == "__main__":
     # Else, process and synchronize
     else:
         print('Synchronizing data', file=sys.stderr)
-        print('Mode:\t\t\t', MODE, file=sys.stderr)
-        print('Frequency:\t\t', FREQ, file=sys.stderr)
-        print('Back Fill:\t\t', BACKWARD_FILL, file=sys.stderr)
-        print('Format Header:\t', FORMAT_OUTPUT_HEADER, file=sys.stderr)
-        print('------------------------', file=sys.stderr)
+        print('Mode:\t\t\t\t', MODE, file=sys.stderr)
+        print('Frequency:\t\t\t', FREQ, file=sys.stderr)
+        print('Forward Fill:\t\t', FORWARD_FILL, file=sys.stderr)
+        print('Back Fill:\t\t\t', BACKWARD_FILL, file=sys.stderr)
+        print('First Forward Fill?:', FIRST_FORWARD, file=sys.stderr)
+        print('Format Header:\t\t', FORMAT_OUTPUT_HEADER, file=sys.stderr)
+        print('---------------------------------', file=sys.stderr)
 
         for use_index, value in enumerate(USE_BOOLS):
             print('Sensor {ind}:\t\t'.format(ind=use_index+1), value, file=sys.stderr)
@@ -219,10 +240,10 @@ if __name__ == "__main__":
                     origin = eval(config['MODEL_SETTINGS']['origin'])
                     if origin == 'creation_day_of_file':
                         origin = pd.to_datetime(datetime.fromtimestamp(
-                            os.path.getctime(Data_File)).strftime('%D'))
+                            os.path.getctime(Data_File)).strftime('%d-%m-%Y %H:%M:%S'))
                     elif origin == 'modification_day_of_file':
                         origin = pd.to_datetime(datetime.fromtimestamp(
-                            os.path.getmtime(Data_File)).strftime('%D'))
+                            os.path.getmtime(Data_File)).strftime('%d-%m-%Y %H:%M:%S'))
                     else:
                         origin = pd.to_datetime(origin)
                 else:
@@ -337,22 +358,22 @@ if __name__ == "__main__":
         total_sensor_df.df.to_csv(FILE_PATH_SAVE_EXPORT, sep=';',header=header_export_renamed, na_rep=0, quotechar='#')
 
 
-# =============================================================================
-#         # # Calculate Allan Deviation of a signal:
-#         #
-#         # if MODE == 'sec':
-#         #     rates = FREQ
-#         # elif MODE == 'min':
-#         #     rates = FREQ*60
-#         # else:
-#         #     rates = FREQ*60*24
-#         
-#         # data_all = total_sensor_df.df['R1 [uPa]'].tolist()
-#         # (taus_out_all, ad_all, ade_all, adn_all) = allantools.oadev(data_all, rate=1.0/rates, data_type="freq", taus="all")
-#         # allan_df_all = pd.DataFrame({'Taus_min_all': taus_out_all/60, 'ad_all': ad_all, 'ad_error_all': ade_all, 'ad_number_all': adn_all})   
-#         # allan_df_all.to_csv(DATA_PATH_SAVE_EXPORT+'/'+FILE_EXT_SAVE_EXPORT_0+'_{freq}{mode}__AllanDeviation_All.csv'.format(freq=FREQ,mode=MODE), sep=';', na_rep=0, quotechar='#')
-# 
-# =============================================================================
+        # =============================================================================
+        #         # # Calculate Allan Deviation of a signal:
+        #         #
+        #         # if MODE == 'sec':
+        #         #     rates = FREQ
+        #         # elif MODE == 'min':
+        #         #     rates = FREQ*60
+        #         # else:
+        #         #     rates = FREQ*60*24
+        #         
+        #         # data_all = total_sensor_df.df['R1 [uPa]'].tolist()
+        #         # (taus_out_all, ad_all, ade_all, adn_all) = allantools.oadev(data_all, rate=1.0/rates, data_type="freq", taus="all")
+        #         # allan_df_all = pd.DataFrame({'Taus_min_all': taus_out_all/60, 'ad_all': ad_all, 'ad_error_all': ade_all, 'ad_number_all': adn_all})   
+        #         # allan_df_all.to_csv(DATA_PATH_SAVE_EXPORT+'/'+FILE_EXT_SAVE_EXPORT_0+'_{freq}{mode}__AllanDeviation_All.csv'.format(freq=FREQ,mode=MODE), sep=';', na_rep=0, quotechar='#')
+        # 
+        # =============================================================================
 
         # Options START_EXPORT and END_EXPORT are defined:
         if START_EXPORT != None and END_EXPORT != None:

@@ -147,15 +147,31 @@ def ComPASV4_Post_Script(SENSOR_Object):
 
 
 def ComPASV5_Pre_Script(SENSOR_Object):  
+    # Method to add BKG True for X Seconds after BKG was active:
+    BKGS = SENSOR_Object.df1.df['BKG Meas. Active'].astype(bool).copy()
+    for indx, val in reversed(list(enumerate(BKGS[:-1]))):
+        if val:
+            if BKGS[indx+1]==False:
+                for indx2 in range(indx,indx+70):
+                    # 60 because ComPAS data are 1 second and I want to add 70 seconds more BKG active.
+                    if indx2==len(BKGS):
+                        break
+                    else:
+                        BKGS[indx2]=True        
+    SENSOR_Object.df1.df['BKG Meas. Active'] = BKGS.astype(bool)             
+    
     return SENSOR_Object
 
 def ComPASV5_Post_Script(SENSOR_Object):
+    #Mic_Konstant = 214.7483648
+    #Mic_Konstant = 215.2582778
+    Mic_Konstant = 68.07064429
     new_R1, new_Th1 = Amplitude_Phase(SENSOR_Object.df2, 'X1', 'Y1', 'R1 [uPa]', 'Theta1 [deg]')
-    SENSOR_Object.addSubset(new_R1/214.7483648, ['R1 [uPa]'],new_units=['uPa'],df_index=2) # Scale R to uPa
+    SENSOR_Object.addSubset(new_R1/Mic_Konstant, ['R1 [uPa]'],new_units=['uPa'],df_index=2) # Scale R to uPa
     SENSOR_Object.addSubset(new_Th1, ['Theta1 [deg]'],new_units=['deg'],df_index=2) # Theta in deg
 
     new_R2, new_Th2 = Amplitude_Phase(SENSOR_Object.df2, 'X2', 'Y2', 'R2 [uPa]', 'Theta2 [deg]')
-    SENSOR_Object.addSubset(new_R2/214.7483648, ['R2 [uPa]'],new_units=['uPa'],df_index=2) # Scale R to uPa
+    SENSOR_Object.addSubset(new_R2/Mic_Konstant, ['R2 [uPa]'],new_units=['uPa'],df_index=2) # Scale R to uPa
     SENSOR_Object.addSubset(new_Th2, ['Theta2 [deg]'],new_units=['deg'],df_index=2) # Theta in deg
 
     
@@ -165,7 +181,7 @@ def ComPASV5_Post_Script(SENSOR_Object):
     SENSOR_Object.plotkey = 'R1 [uPa]'
 
     return SENSOR_Object
-    
+
 
 def PMS_Pre_Script(SENSOR_Object):
     return SENSOR_Object

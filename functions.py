@@ -72,7 +72,7 @@ def create_ini_file_from_dict(filepath,dictionary):
         dictionary =    input dictionary
         """
     new_config_file = open(filepath, "w")
-    new_config_file.write("[GENERAL_SETTINGS]\n")
+    new_config_file.write("[MODEL_SETTINGS]\n")
     for key,value in dictionary.items():
         if type(value) == list:
             new_config_file.write(key + " : [" )
@@ -106,6 +106,8 @@ def create_ini_file_from_dict(filepath,dictionary):
         elif value == None: # value == None, int or float
             new_config_file.write(key + " : None \n")
         elif type(value) == str: # value == None, int or float
+            new_config_file.write(key + " : '" + str(value) + "'\n")
+        elif key == 'origin':
             new_config_file.write(key + " : '" + str(value) + "'\n")
         else: # value == int or float or bool
             new_config_file.write(key + " : " + str(value) + "\n")
@@ -351,6 +353,10 @@ def calculate_intervals(dataframe, freq = 1, mode = 'min', decimals = 0, column=
         end = dt+dt_0
         subset = dataframe.getSubset_df(start, end, column)
         
+        index = len(df)
+        if len(subset) == 0:
+            subset = dataframe.getSubset_df(start, end, column)
+            
         index = len(df)
         df.loc[index, 'start'] = start
         df.loc[index, 'end'] = end
