@@ -76,11 +76,11 @@ If provided, use exact name of the time/index column.
 See output file 'myModel'_settings.ini in the directory /models_settings/:
 
 - model : 'myModel'     
-ID Name to recognize the model.        
+ID Name to recognize the model (needed for custom scripts).        
 
 - separator : None      
 Separator in the dataset, use None to interpret datas with python-interpreter   
-or "," , "\t", ";", " " ...   
+or "," , "\t", ";", " ", ...   
 
 - skiprows : 0     
 Skip rows before header / first row of datas.
@@ -94,16 +94,16 @@ Column name with the time units. Use None to use first column.
 If provided, use exact name of the time/index column. 
 
 - plotkey : ''      
-Column for preview plot. Use '' or None to use last column.     
+Column for preview plot. Use '' or None to use last column. Optional.     
 
 - header : []     
-Overwrite header in the datafile. Use None to interpret first row as header.    
+Overwrite header in the datafile. Use None to interpret first row as header. Optional.     
 
 - header_export : []    
-Signals to export. If None, header_export = header.    
+Signals to export. If None, header_export = header. Optional.    
 
 - signal_units_dict : {}   
-Dictionary for the units of the signals/columns. Use None for no units.     
+Dictionary for the units of the signals/columns. Use None for no units. Optional.     
 
 
 ## 2.) Synchronization process
@@ -121,7 +121,7 @@ Freq: any integer > 0 for the equidistant time intervals.
 Mode: sec, min or hours for the units of the time intervals.    
   
 - DATA_PATH_SAVE_EXPORT & FILE_EXT_SAVE_EXPORT:     
-Path for the output files    
+Path for the output files.     
   
 - FORWARD_FILL: True/False     
 if True, missing values in exported dataframe will be filled (forward in time).    
