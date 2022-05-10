@@ -46,7 +46,15 @@ class sensor_df(object):
                 if columns_export.count(val)>0:
                     existing_column_names.append(val)    
             # [f(x) if condition else g(x) for x in sequence]       
-            # existing_column_names = [val if (columns_export.count(val)>0) else '' for val in column_names.items()]       
+            # existing_column_names = [val if (columns_export.count(val)>0) else '' for val in column_names.items()] 
+        
+        # time_start = pd.to_datetime(start)
+        # time_end = pd.to_datetime(end)
+        # indx_start  = self.df.index[self.df.index.get_loc(time_start, method='nearest')]
+        # indx_end  = self.df.index[self.df.index.get_loc(time_end, method='nearest')]
+        # # Produces Error: InvalidIndexError: Reindexing only valid with uniquely valued Index objects
+        # print(indx_start,indx_end)
+        
         return self.df.loc[pd.to_datetime(start):pd.to_datetime(end), existing_column_names]
    
     def dropDuplicates_in_df(self, column_to_check):  
@@ -356,8 +364,12 @@ class Sensor(object):
             # Datetime format is given from excel (example 44544.42951 is 2021-Dec-14. 10:18:29.664)
             self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[TimeColumn_out], unit='D', origin=pd.to_datetime('1899/12/31'), utc=False)
             #self.df1.df['Datetime'] = pd.to_datetime(self.df1.df['Datetime'], utc=True) - pd.to_timedelta(2, unit='D') # subtract 2 additional days 
+        elif TimeFormat_out[:24] in ['DateTime_CustomFormat = ']:
+            self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[TimeColumn_out], infer_datetime_format=False, format=TimeFormat_out[24:], utc=False )
         elif TimeFormat_out in ['DateTime_2Column']:
             self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[DateColumn_out] + " " + self.df1.df[TimeColumn_out], infer_datetime_format=True, utc=False)
+        elif TimeFormat_out[:32] in ['DateTime_2Column_CustomFormat = ']:
+            self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[DateColumn_out] + " " + self.df1.df[TimeColumn_out], infer_datetime_format=False, format=TimeFormat_out[32:], utc=False)
         elif TimeFormat_out in ['origin']:
             self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[TimeColumn_out], unit=date_units, origin=origin, utc=False)
         elif TimeFormat_out[:9] == 'Format = ':
@@ -366,6 +378,7 @@ class Sensor(object):
             self.df1.df['Datetime'] = pd.to_datetime(self.df1.df[TimeColumn_out], infer_datetime_format=True, utc=False )
         
         self.df1.df = self.df1.df.set_index('Datetime')
+        
  
         self.signals = header_out
         self.signals_export = header_export_out

@@ -348,19 +348,54 @@ def calculate_intervals(dataframe, freq = 1, mode = 'min', decimals = 0, column=
         
     tmin = time_rounder((dataframe.df.first_valid_index()),freq,mode)
     tmax = time_rounder((dataframe.df.last_valid_index()),freq,mode) - dt_0
+    
+    inv_counter = 0
+    
     for dt in rrule.rrule(ruler, interval = freq, dtstart=tmin, until=tmax):
         start = dt
         end = dt+dt_0
-        subset = dataframe.getSubset_df(start, end, column)
+              
+        # result_index_start = dataframe.df.index.tolist().sub(start).abs().idxmin()
+        # result_index_end = dataframe.df.index.tolist().sub(end).abs().idxmin()
         
-        index = len(df)
+        #start_shifted = (start not in dataframe.df.index) 
+        #end_shifted = (end not in dataframe.df.index)
+        start_value = start
+        end_value = end
+        
+        # print(result_index_start)
+        while (start_value not in dataframe.df.index) and (inv_counter > 2):
+            start_value -= timedelta(seconds=1)
+            #print('Shifting Start Time...', start)
+            if start_value <= tmin:
+                break
+        
+        while (end_value not in dataframe.df.index):
+            end_value += timedelta(seconds=1)
+            #print('Shifting End Time...', end)
+            if end_value >= tmax:
+                break
+        #print('------------')
+        # if start_shifted:
+        #     print('Shifted Start Time from', start, 'to', start_value)
+        # if end_shifted:
+        #     print('Shifted End Time from', end, 'to', end_value)
+        
+        subset = dataframe.getSubset_df(start_value, end_value, column)
+        
+        
+        #print('my Subset', subset)
         if len(subset) == 0:
-            subset = dataframe.getSubset_df(start, end, column)
-            
+            print('Warning! Empty Subset')
+            subset = dataframe.getSubset_df(start_value-2*dt_0, end_value, column)
+        
         index = len(df)
         df.loc[index, 'start'] = start
         df.loc[index, 'end'] = end
-
+        #print('start:', start)
+        #print('end:', end)
+        #print(subset)
+        
         if avg_mode:
             columns_dict = dict(subset.mean(numeric_only=numerics_only))
         else:
@@ -368,5 +403,9 @@ def calculate_intervals(dataframe, freq = 1, mode = 'min', decimals = 0, column=
             
         for key, value in columns_dict.items():
             df.loc[index, key] = round(value,decimals)
+        
+        inv_counter += 1
+        
     df = df.set_index('end')
+    
     return df

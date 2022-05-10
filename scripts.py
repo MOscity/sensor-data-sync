@@ -1,4 +1,4 @@
-from lib import np, pd, allantools
+from lib import np, pd, allantools, timedelta
 
 def Amplitude_Phase(SENSOR_Object_df,X_Column,Y_Column,R_Name,Theta_Name):    
     new_R = pd.DataFrame({R_Name: np.sqrt(SENSOR_Object_df.df[X_Column]**2+SENSOR_Object_df.df[Y_Column]**2)},index=SENSOR_Object_df.df.index)
@@ -17,6 +17,8 @@ def Check_Pre_Scripts(SENSOR_Object):
         return ComPASV4_Pre_Script(SENSOR_Object)
     elif model_name == 'ComPAS-V5':
         return ComPASV5_Pre_Script(SENSOR_Object)
+    elif model_name == 'PAX':
+        return PAX_Pre_Script(SENSOR_Object)
     elif model_name == 'SMPS3080_Export':
         return SMPS3080_Exp_Pre_Script(SENSOR_Object)
     elif model_name == 'SMPS3080':
@@ -42,6 +44,8 @@ def Check_Post_Scripts(SENSOR_Object):
         return ComPASV4_Post_Script(SENSOR_Object)
     elif model_name == 'ComPAS-V5':
         return ComPASV5_Post_Script(SENSOR_Object)
+    elif model_name == 'PAX':
+        return PAX_Post_Script(SENSOR_Object)
     elif model_name == 'SMPS3080_Export':
         return SMPS3080_Exp_Post_Script(SENSOR_Object)
     elif model_name == 'SMPS3080':
@@ -58,6 +62,13 @@ def Check_Post_Scripts(SENSOR_Object):
 
 def Aeth33_Pre_Script(SENSOR_Object):
     # Method for value hold while Background Measurement active (via value comparison)
+    timelist = SENSOR_Object.df1.df.index.tolist()
+    for timeindex in range(len(timelist)):
+        timelist[timeindex] += timedelta(hours=1)
+    
+    SENSOR_Object.df1.df.index = timelist
+    
+    
     Copy_df = SENSOR_Object.df1.df[['BB', 'BC1', 'BC2', 'BC3', 'BC4', 'BC5', 'BC6', 'BC7']].copy()
     Copy_df.loc[Copy_df['BC3']<0.0000001, Copy_df.columns] = None
     Copy_df = Copy_df.ffill()
@@ -175,11 +186,29 @@ def ComPASV5_Post_Script(SENSOR_Object):
     SENSOR_Object.addSubset(new_Th2, ['Theta2 [deg]'],new_units=['deg'],df_index=2) # Theta in deg
 
     
+    # Green Channel Calibration
+    Green_Amplitdue_NO2_1ppm = 1550
+    Green_Absorption_NO2_1ppm = 415.46
+    new_R1_Green, new_Th1_Green = Amplitude_Phase(SENSOR_Object.df2, 'X Green [a.u.]', 'Y Green [a.u.]', 'R1_Green [1/Mm]', 'Theta1_Green [deg]')
+    SENSOR_Object.addSubset(new_R1_Green/Mic_Konstant*Green_Absorption_NO2_1ppm/Green_Amplitdue_NO2_1ppm, ['R1_Green [1/Mm]'],new_units=['1/Mm'],df_index=2) # Scale R to uPa
+    SENSOR_Object.addSubset(new_Th1_Green, ['Theta1_Green [deg]'],new_units=['deg'],df_index=2) # Theta in deg
+
+    new_R1_BKG_Green, new_Th1_BKG_Green = Amplitude_Phase(SENSOR_Object.df2, 'X BKG Green [a.u.]', 'Y BKG Green [a.u.]', 'R1_BKG_Green [1/Mm]', 'Theta1_BKG_Green [deg]')
+    SENSOR_Object.addSubset(new_R1_BKG_Green/Mic_Konstant*Green_Absorption_NO2_1ppm/Green_Amplitdue_NO2_1ppm, ['R1_BKG_Green [1/Mm]'],new_units=['1/Mm'],df_index=2) # Scale R to uPa
+    SENSOR_Object.addSubset(new_Th1_BKG_Green, ['Theta1_BKG_Green [deg]'],new_units=['deg'],df_index=2) # Theta in deg
+    
+    
     # SENSOR_Object.df2.df['BKG Meas. Active'] = SENSOR_Object.df2.df['BKG Meas. Active'].astype(bool)
     # SENSOR_Object.df2.df['BKG Meas. Active'] = SENSOR_Object.df2.df['BKG Meas. Active'].astype(float)
 
-    SENSOR_Object.plotkey = 'R1 [uPa]'
+    SENSOR_Object.plotkey = 'R1_Green [1/Mm]'
 
+    return SENSOR_Object
+
+def PAX_Pre_Script(SENSOR_Object):  
+    return SENSOR_Object
+
+def PAX_Post_Script(SENSOR_Object):
     return SENSOR_Object
 
 

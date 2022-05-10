@@ -16,7 +16,7 @@ if __name__ == "__main__":
         os.path.abspath(os.path.dirname(sys.argv[0]))) + "/"
 
     # Default path to config.ini file
-    config_file = default_dir + "config.ini"
+    config_file = default_dir + "config_7_Aussenluft_Mai.ini"
 
     # Arguments
     parser = argparse.ArgumentParser(description='Sensors utilities')
@@ -97,7 +97,7 @@ if __name__ == "__main__":
 
         # OUTPUT_SETTINGS
         FREQ = 10
-        MODE = 'sec'
+        MODE = 'min'
 
         FORWARD_FILL = True
         BACKWARD_FILL = True
@@ -201,7 +201,7 @@ if __name__ == "__main__":
         print('---------------------------------', file=sys.stderr)
 
         for use_index, value in enumerate(USE_BOOLS):
-            print('Sensor {ind}:\t\t'.format(ind=use_index+1), value, file=sys.stderr)
+            print('Sensor {ind}:\t\t\t'.format(ind=use_index+1), value, file=sys.stderr)
 
         # create new dataframe to merge all datas in (stack horizontally)
         total_sensor_df = sensor_df(pd.DataFrame())
@@ -278,7 +278,7 @@ if __name__ == "__main__":
                     
 
                     SENSOR_Object = Check_Pre_Scripts(SENSOR_Object)
-                                        
+
                     # Calculate averages of export signals:
                     if args.CSV:  # if CSV file is provided
                         intervals_df_export = calculate_intervals_csv(args.CSV, SENSOR_Object.df1, column=SENSOR_Object.signals_export)
