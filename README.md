@@ -56,8 +56,8 @@ or "," , "\t", ";", " " ...
 
 - TIME_FORMAT_NEW       
 Time Format for the time datas.   
-Allowed Formats: None, 'Excel', 'DateTime_1Column', 'DateTime_2Column', 'origin' or 'Format = <>'. 
-Works best with 'Format = <>'.  
+Allowed Formats: None, 'Excel', 'DateTime_1Column', 'DateTime_2Column', 'origin', 'DateTime_CustomFormat = <>', 'DateTime_2Column_CustomFormat = <>' or 'Format = <>'.   
+Works best with 'Format = <>', 'DateTime_CustomFormat = <>' or 'DateTime_2Column_CustomFormat = <>'.   
 For example: 'Format = %%d.%%m.%%Y %%H:%%M:%%S' for 30.12.2021 15:45:10.  
 Or 'Format = %%d/%%m/%%Y”, note that “%%f” will parse all the way up to nanoseconds.    
 Note that in this .ini file one must write '%%' instead of '%'.   
@@ -86,11 +86,11 @@ or "," , "\t", ";", " ", ...
 Skip rows before header / first row of datas.
 If a header is provided (!=None), one additional line will be skipped.
 
-- TimeFormat : 'Format = %%d.%%m.%%Y %%H:%%M:%%S'       
+- TimeFormat : 'Format = %%d.%%m.%%Y %%H:%%M:%%S', or 'DateTime_2Column_CustomFormat = %%Y-%%m-%%d %%H:%%M:%%S' etc.       
 Time Format for the time datas. See above.
 
 - TimeColumn : ''    
-Column name with the time units. Use None to use first column.   
+Column name with the time units. Use None to use first column. Use ['Column1', Column'2] if 2 date-time columns given.   
 If provided, use exact name of the time/index column. 
 
 - plotkey : ''      
