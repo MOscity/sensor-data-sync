@@ -66,7 +66,7 @@ https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior.
 See also help(SENSOR_Object).   
 
 - TIME_COLUMN_NEW       
-Column name with the time units. Use None to use first column.   
+Column name with the time units. Use None to use first column. Use ['Column1', Column'2] if 2 date-time columns given.     
 If provided, use exact name of the time/index column. 
 
 ### b.) Run main.py
