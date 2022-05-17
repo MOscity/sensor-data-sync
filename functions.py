@@ -355,27 +355,30 @@ def calculate_intervals(dataframe, freq = 1, mode = 'min', decimals = 0, column=
         start = dt
         end = dt+dt_0
               
-        # result_index_start = dataframe.df.index.tolist().sub(start).abs().idxmin()
-        # result_index_end = dataframe.df.index.tolist().sub(end).abs().idxmin()
-        
         #start_shifted = (start not in dataframe.df.index) 
         #end_shifted = (end not in dataframe.df.index)
         start_value = start
         end_value = end
         
-        # print(result_index_start)
-        while (start_value not in dataframe.df.index) and (inv_counter > 2):
+        #print('------------')
+        while (start_value not in dataframe.df.index):
             start_value -= timedelta(seconds=1)
-            #print('Shifting Start Time...', start)
+            #print('Shifting Start Time...', start_value)
             if start_value <= tmin:
                 break
-        
+            
         while (end_value not in dataframe.df.index):
             end_value += timedelta(seconds=1)
-            #print('Shifting End Time...', end)
+            #print('Shifting End Time...', end_value)
             if end_value >= tmax:
                 break
-        #print('------------')
+            
+        while (start not in dataframe.df.index):
+            start_value += timedelta(seconds=1)
+            #print('Shifting Start Time forward...', start_value)
+            if start_value >= end_value:
+                break   
+            
         # if start_shifted:
         #     print('Shifted Start Time from', start, 'to', start_value)
         # if end_shifted:

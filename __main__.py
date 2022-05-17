@@ -16,7 +16,7 @@ if __name__ == "__main__":
         os.path.abspath(os.path.dirname(sys.argv[0]))) + "/"
 
     # Default path to config.ini file
-    config_file = default_dir + "config_7_Aussenluft_Mai.ini"
+    config_file = default_dir + "config.ini"
 
     # Arguments
     parser = argparse.ArgumentParser(description='Sensors utilities')
@@ -278,7 +278,6 @@ if __name__ == "__main__":
                     
 
                     SENSOR_Object = Check_Pre_Scripts(SENSOR_Object)
-
                     # Calculate averages of export signals:
                     if args.CSV:  # if CSV file is provided
                         intervals_df_export = calculate_intervals_csv(args.CSV, SENSOR_Object.df1, column=SENSOR_Object.signals_export)
@@ -316,10 +315,12 @@ if __name__ == "__main__":
                         events_sensor_df = sensor_df(events_df)
                         del(events_df)
 
+
                     # # Clear Memory
                     del(intervals_df_export)
                     del(SENSOR_Object)
-
+                    
+                
                 # # Remove time columns with 'start' timestamps.
                 events_sensor_df.removeColumn_from_df('start')
                 total_sensor_df.removeColumn_from_df('start')
