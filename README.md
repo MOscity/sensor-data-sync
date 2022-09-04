@@ -1,6 +1,8 @@
 # sensor-data-sync
 Time-synchronizes several sensor datas in the given time intervals, with optional custom scripts for pre- and post-processing.  
- 
+
+Note: Working on update for cleaner Code :)
+
 Overview of Readme:  
 - 0.) Systems and Packages required   
 
