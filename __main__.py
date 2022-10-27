@@ -8,17 +8,25 @@ from scripts import CheckPostScripts, CheckPreScripts
 
 # MAIN
 if __name__ == "__main__":
+    #################################
     # PLEASE ADJUST BEFORE RUNNING:
-    CONFIG_FILE_NAME = "config_9_ComPAS_CPC_Partektor.ini"
-    
+    CONFIG_FILE_NAME = "config_9_ComPr.ini"
+
+    # Change NUMBER_OF_MAX_SENSORS if you need more then 10 sensors, and then add accordingly new lines for
+    # data paths, settings path, use_sensor_i, etc. in config.ini (see pattern of the first 10 sensors).
+    NUMBER_OF_MAX_SENSORS = 10
+    #################################
+
     # Time Performance Check
     dateTimeStart = datetime.now()
 
     # Default directory of the script
-    defaultDirectoryOfThisScript = os.path.abspath(os.path.dirname(sys.argv[0]))
+    defaultDir = os.path.abspath(
+        os.path.dirname(sys.argv[0]))
 
     # Default path to config.ini file
-    configFilePath = os.path.join(defaultDirectoryOfThisScript,"configs",CONFIG_FILE_NAME)
+    configFilePath = os.path.join(
+        defaultDir, "configs", CONFIG_FILE_NAME)
 
     # Arguments
     parser = argparse.ArgumentParser(description='Sensors utilities')
@@ -37,14 +45,10 @@ if __name__ == "__main__":
     # Check which configuration file was provided
     configFilePath = args.INI
 
-    # maybe there is a better name for this variable...
-    listOfSensorUsageBools = []
+    # List Initialization
+    sensorsToBeProcessedBooleanList = []
     sensorDataPathsList = []
     sensorModelSettingsPathsList = []
-
-    # Change numberOfMaxSensors if you need more then 10 sensors, and then add accordingly new lines for
-    # data paths, settings path, use_sensor_i, etc. in config.ini (see pattern of the first 10 sensors).
-    numberOfMaxSensors = 10
 
     config = configparser.ConfigParser()
 
@@ -56,8 +60,8 @@ if __name__ == "__main__":
             config['settingsInit']['isSensorNewInitialized'])
         newSensorModelName = eval(config['settingsInit']['newSensorModelName'])
 
-        newSensorDataCompletePathString = eval(config['settingsInit']['newSensorDataDirectoryPathString']) + '/' + eval(
-            config['settingsInit']['newSensorDataFileNameString'])
+        newSensorDataCompletePath = os.path.join(eval(config['settingsInit']['newSensorDataDirectoryPathString']), eval(
+            config['settingsInit']['newSensorDataFileNameString']))
         numberOfRowsToSkipInNewSensorData = eval(
             config['settingsInit']['numberOfRowsToSkipInNewSensorData'])
         nameOfTimeColumnInNewSensorData = eval(
@@ -89,29 +93,30 @@ if __name__ == "__main__":
             config['settingsOutput']['exportDirectoryPathString'])
         exportFileNameString = eval(
             config['settingsOutput']['exportFileNameString'])
-        exportBasePathString = exportDirectoryPathString + '/' + exportFileNameString
+        exportBasePathString = os.path.join(
+            exportDirectoryPathString, exportFileNameString)
 
-        exportCompletePathString = exportBasePathString + \
-            '_{freq}{mode}.csv'.format(
-                freq=outputInterval, mode=outputIntervalUnits)
+        exportCompletePathString = os.path.join(
+            exportBasePathString, f'_{outputInterval}{outputIntervalUnits}.csv')
         if exportStartDate != None and exportEndDate != None:
+
             exportStartPandaDateTime = pd.to_datetime(
                 exportStartDate, format='%d.%m.%Y')
+
             exportEndPandaDateTime = pd.to_datetime(
                 exportEndDate, format='%d.%m.%Y')
+
             exportStartDate = exportStartPandaDateTime.strftime('%Y-%m-%d')
             exportEndDate = exportEndPandaDateTime.strftime('%Y-%m-%d')
-            exportDailyCompletePathString = exportBasePathString + '_{freq}{mode}__{start}__{end}.csv'.format(
-                freq=outputInterval, mode=outputIntervalUnits, start=exportStartDate, end=exportEndDate)
 
         # settingsGeneral and settingsOutput
-        for k in range(1, numberOfMaxSensors+1):
-            listOfSensorUsageBools.append(
+        for k in range(1, NUMBER_OF_MAX_SENSORS+1):
+            sensorsToBeProcessedBooleanList.append(
                 eval(config['settingsOutput']['isSensorProcessed_'+str(k)]))
-            sensorDataPathsList.append(eval(config['settingsGeneral']['sensorDataDirectoryPathString_'+str(
-                k)]) + '/' + eval(config['settingsGeneral']['sensorDataFileExtensionString_'+str(k)]))
-            sensorModelSettingsPathsList.append(defaultDirectoryOfThisScript + eval(
-                config['settingsGeneral']['sensorModelSettingsRelativePathString_'+str(k)]))
+            sensorDataPathsList.append(os.path.join(eval(config['settingsGeneral']['sensorDataDirectoryPathString_'+str(
+                k)]), eval(config['settingsGeneral']['sensorDataFileExtensionString_'+str(k)])))
+            sensorModelSettingsPathsList.append(os.path.join(defaultDir, eval(
+                config['settingsGeneral']['sensorModelSettingsRelativePathString_'+str(k)])))
 
     else:  # Assume default values
         print('Could not find the configuration file {0}'.format(
@@ -127,54 +132,44 @@ if __name__ == "__main__":
         isFilledForward = True
         isFilledBackward = True
         isFilledFirstForwardThenBackward = True
-
         isOutputHeaderFormatted = True
 
         exportStartDate = None
         exportEndDate = None
         areAdditionalFilesExportedForEachDay = False
 
-        exportCompletePathString = defaultDirectoryOfThisScript + \
-            'output/Sample_Average_out_{freq}{mode}.csv'.format(
-                freq=outputInterval, mode=outputIntervalUnits)
+        exportCompletePathString = os.path.join(
+            defaultDir, 'output', f'Sample_Average_out_{outputInterval}{outputIntervalUnits}.csv')
+
+        sampleDataDir = os.path.join(defaultDir, 'sample_datas')
+        modelsDataDir = os.path.join(defaultDir, 'models_settings')
 
         # settingsGeneral and settingsOutput
-        sensorDataPathAETH = defaultDirectoryOfThisScript + 'sample_datas/AE33_sample.dat'
-        sensorDataPathPMS = defaultDirectoryOfThisScript + 'sample_datas/PMS1_sample.csv'
-        sensorDataPathComPAS = defaultDirectoryOfThisScript + \
-            'sample_datas/ComPASV4_sample.txt'
-        sensorDataPathSMPS = defaultDirectoryOfThisScript + \
-            'sample_datas/SMPS3080_Export_sample.csv'
-        sensorDataPathMSPTI = defaultDirectoryOfThisScript + \
-            'sample_datas/MSPTI_Metas_Export_sample.csv'
-        sensorDataPathMiniPTI = defaultDirectoryOfThisScript + \
-            'sample_datas/miniPTI_Export_sample.csv'
+        sensorDataFiles = ['AE33_sample.dat',
+                           'PMS1_sample.csv',
+                           'ComPASV4_sample.txt',
+                           'SMPS3080_Export_sample.csv',
+                           'MSPTI_Metas_Export_sample.csv',
+                           'miniPTI_Export_sample.csv']
 
-        sensorModelSettingsPathAETH = defaultDirectoryOfThisScript + \
-            'models_settings/AE33_settings.ini'
-        sensorModelSettingsPathPMS = defaultDirectoryOfThisScript + \
-            'models_settings/PMSChinaSensor_settings.ini'
-        sensorModelSettingsPathComPAS = defaultDirectoryOfThisScript + \
-            'models_settings/ComPAS-V4_settings.ini'
-        sensorModelSettingsPathSMPS = defaultDirectoryOfThisScript + \
-            'models_settings/SMPS3080_Export_Settings.ini'
-        sensorModelSettingsPathMSPTI = defaultDirectoryOfThisScript + \
-            'models_settings/MSPTI_Metas_settings.ini'
-        sensorModelSettingsPathMINIPTI = defaultDirectoryOfThisScript + \
-            'models_settings/miniPTI_settings.ini'
+        sensorConfigFiles = ['AE33_settings.ini',
+                             'PMSChinaSensor_settings.ini',
+                             'ComPAS-V4_settings.ini',
+                             'SMPS3080_Export_Settings.ini',
+                             'MSPTI_Metas_settings.ini',
+                             'miniPTI_settings.ini']
 
-        listOfSensorUsageBools = [True, True, True, True, True, True]
-        sensorDataPathsList = [sensorDataPathAETH, sensorDataPathPMS, sensorDataPathComPAS,
-                               sensorDataPathSMPS, sensorDataPathMSPTI, sensorDataPathMiniPTI]
-        sensorModelSettingsPathsList = [sensorModelSettingsPathAETH, sensorModelSettingsPathPMS, sensorModelSettingsPathComPAS,
-                                        sensorModelSettingsPathSMPS, sensorModelSettingsPathMSPTI, sensorModelSettingsPathMINIPTI]
+        sensorsToBeProcessedBooleanList = [True, True, True, True, True, True]
 
-        for k in range(7, numberOfMaxSensors+1):
-            listOfSensorUsageBools.append(False)
-            sensorDataPathsList.append(
-                defaultDirectoryOfThisScript + 'model_settings/no_data.csv')
-            sensorModelSettingsPathsList.append(
-                defaultDirectoryOfThisScript + 'model_settings/no_settings.ini')
+        sensorDataPathsList = [os.path.join(
+            sampleDataDir, sensorDataFiles[k]) for k in range(len(sensorDataFiles))]
+        sensorModelSettingsPathsList = [os.path.join(
+            modelsDataDir, sensorConfigFiles[k]) for k in range(len(sensorConfigFiles))]
+
+        for k in range(7, NUMBER_OF_MAX_SENSORS+1):
+            sensorsToBeProcessedBooleanList.append(False)
+            sensorDataPathsList.append(os.path.join(
+                defaultDir, 'model_settings', 'no_data.csv'))
 
     # Initializiation Complete
     print('---------------------------------', file=sys.stderr)
@@ -182,7 +177,7 @@ if __name__ == "__main__":
     # if isSensorNewInitialized is true, skip averaging process etc.
     if isSensorNewInitialized:
         print('New Sensor:\t\t',
-          isSensorNewInitialized, file=sys.stderr)
+              isSensorNewInitialized, file=sys.stderr)
 
         print('Initializing new sensor data...', file=sys.stderr)
         sensorName = 'mySensor'
@@ -199,10 +194,10 @@ if __name__ == "__main__":
 
             if dateTimeOriginNewSensor == 'creationDayOfFile':
                 dateTimeOriginNewSensor = pd.to_datetime(datetime.fromtimestamp(
-                    os.path.getctime(newSensorDataCompletePathString)).strftime('%d-%m-%Y %H:%M:%S'))
+                    os.path.getctime(newSensorDataCompletePath)).strftime('%d-%m-%Y %H:%M:%S'))
             elif dateTimeOriginNewSensor == 'modificationDayOfFile':
                 dateTimeOriginNewSensor = pd.to_datetime(datetime.fromtimestamp(
-                    os.path.getmtime(newSensorDataCompletePathString)).strftime('%d-%m-%Y %H:%M:%S'))
+                    os.path.getmtime(newSensorDataCompletePath)).strftime('%d-%m-%Y %H:%M:%S'))
             else:
                 dateTimeOriginNewSensor = pd.to_datetime(
                     dateTimeOriginNewSensor)
@@ -213,29 +208,29 @@ if __name__ == "__main__":
 
         # Create sensor object and read data
         mySensor = Sensor(sensorName,
-                        newSensorModelName,
-                        newSensorDataCompletePathString,
-                        numberOfRowsToSkip=numberOfRowsToSkipInNewSensorData,
-                        timeColumnName=nameOfTimeColumnInNewSensorData,
-                        timeColumnFormat=formatStyleOfTimeColumnInNewSensorData,
-                        dateTimeOrigin=dateTimeOriginNewSensor,
-                        timeIntervalUnitsString=timeIntervalUnitsStringNewSensor
-                        )
+                          newSensorModelName,
+                          newSensorDataCompletePath,
+                          numberOfRowsToSkip=numberOfRowsToSkipInNewSensorData,
+                          timeColumnName=nameOfTimeColumnInNewSensorData,
+                          timeColumnFormat=formatStyleOfTimeColumnInNewSensorData,
+                          dateTimeOrigin=dateTimeOriginNewSensor,
+                          timeIntervalUnitsString=timeIntervalUnitsStringNewSensor
+                          )
         headerListOut = list(mySensor.signals)
 
         # create new dictionary for modelsettings file
         newInitDictionary = {'modelName': newSensorModelName,
-                            'dataSeparator': dataSeparatorInNewSensorData,
-                            'numberOfRowsToSkip': numberOfRowsToSkipInNewSensorData,
-                            'timeColumnFormat': formatStyleOfTimeColumnInNewSensorData,
-                            'timeColumnName': nameOfTimeColumnInNewSensorData,
-                            'dateTimeOrigin': dateTimeOriginNewSensor,
-                            'timeIntervalUnitsString': timeIntervalUnitsStringNewSensor,
-                            'plotColumn': headerListOut[-1],
-                            'headerList': headerListOut,
-                            'exportHeaderList': headerListOut,
-                            'unitsOfColumnsDictionary': mySensor.unitsOfColumnsDictionary
-                            }
+                             'dataSeparator': dataSeparatorInNewSensorData,
+                             'numberOfRowsToSkip': numberOfRowsToSkipInNewSensorData,
+                             'timeColumnFormat': formatStyleOfTimeColumnInNewSensorData,
+                             'timeColumnName': nameOfTimeColumnInNewSensorData,
+                             'dateTimeOrigin': dateTimeOriginNewSensor,
+                             'timeIntervalUnitsString': timeIntervalUnitsStringNewSensor,
+                             'plotColumn': headerListOut[-1],
+                             'headerList': headerListOut,
+                             'exportHeaderList': headerListOut,
+                             'unitsOfColumnsDictionary': mySensor.unitsOfColumnsDictionary
+                             }
 
         # create modelsettings .ini file from new dictionary
         relativeFilePathOfInit = "models_settings/{NewModel}_settings.ini".format(
@@ -247,7 +242,7 @@ if __name__ == "__main__":
         print('Initialization complete.', file=sys.stderr)
         print('------', file=sys.stderr)
         print("Saved settings .ini file for model {sensorModelName} in:\n>>{fpath}".format(
-            sensorModelName=newSensorModelName, fpath=defaultDirectoryOfThisScript+'/ \n'+relativeFilePathOfInit), file=sys.stderr)
+            sensorModelName=newSensorModelName, fpath=defaultDir+'/ \n'+relativeFilePathOfInit), file=sys.stderr)
         print("\nAccess sensor object functions with mySensor.<>,\nor see documentation with help(mySensor)\nor clear memory with del(mySensor).", file=sys.stderr)
 
         # Clear Memory
@@ -265,7 +260,7 @@ if __name__ == "__main__":
         print('Format Header:\t\t', isOutputHeaderFormatted, file=sys.stderr)
         print('---------------------------------', file=sys.stderr)
 
-        for index, value in enumerate(listOfSensorUsageBools):
+        for index, value in enumerate(sensorsToBeProcessedBooleanList):
             print('Sensor {ind}:\t\t\t'.format(
                 ind=index+1), value, file=sys.stderr)
 
@@ -276,7 +271,7 @@ if __name__ == "__main__":
         # count the sensors used, for debug purpose
         sensorsCounted = 0
 
-        for sensorNIsUsed, sensorIndexN in zip(listOfSensorUsageBools, range(len(listOfSensorUsageBools))):
+        for sensorNIsUsed, sensorIndexN in zip(sensorsToBeProcessedBooleanList, range(len(sensorsToBeProcessedBooleanList))):
             if sensorNIsUsed:
                 sensorsCounted += 1
                 print('------------------------', file=sys.stderr)
@@ -429,13 +424,12 @@ if __name__ == "__main__":
                 # # Clear Memory
                 del (dfAllEventsOfOneSensor)
 
-
         # drop duplicate entries at the end
         dfAllEventsOfAllSensors.df = dfAllEventsOfAllSensors.df.drop_duplicates()
 
         # # Save exports
         dfAllEventsOfAllSensors.df.to_csv(exportCompletePathString, sep=';',
-                                        header=exportHeaderListRenamed, na_rep=0, quotechar='#')
+                                          header=exportHeaderListRenamed, na_rep=0, quotechar='#')
 
         # =============================================================================
         #         # # Calculate Allan Deviation of a signal (created for ComPAS Data... need to be adjusted manually for your own data):
@@ -459,8 +453,10 @@ if __name__ == "__main__":
             # # Save time subset of export
             dfSubEventsOfAllSensors = dfAllEventsOfAllSensors.getDfSubset(
                 exportStartPandaDateTime, exportEndPandaDateTime)
-            dfSubEventsOfAllSensors.to_csv(exportDailyCompletePathString, sep=';',
-                                        header=exportHeaderListRenamed, na_rep=0, quotechar='#')
+
+            dfSubEventsOfAllSensors.to_csv(os.path.join(exportBasePathString, f'_{outputInterval}{outputIntervalUnits}__{exportStartDate}__{exportEndDate}.csv'),
+                                           sep=';',
+                                           header=exportHeaderListRenamed, na_rep=0, quotechar='#')
 
             # # Clear Memory
             del (dfSubEventsOfAllSensors)
@@ -493,7 +489,7 @@ if __name__ == "__main__":
                     exportStartPandaDateN, exportEndPandaDate_N)
                 if len(dfSubEventsOfAllSensors) > 0:
                     dfSubEventsOfAllSensors.to_csv(exportDayNCompletePathString, sep=';',
-                                                headerList=exportHeaderListRenamed, na_rep=0, quotechar='#')
+                                                   headerList=exportHeaderListRenamed, na_rep=0, quotechar='#')
 
                 # # Clear Memory
                 del (dfSubEventsOfAllSensors)
@@ -502,7 +498,7 @@ if __name__ == "__main__":
                 dayCounterN += 1
 
         # # Clear Memory
-        del(dfAllEventsOfAllSensors)
+        del (dfAllEventsOfAllSensors)
 
         print('------', file=sys.stderr)
         print('Synchronization complete.', file=sys.stderr)

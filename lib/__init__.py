@@ -1,6 +1,10 @@
-import configparser, argparse # for argument parsing
+import configparser
+import argparse  # for argument parsing
 from dateutil.parser import parse
-import sys, time, os, glob
+import sys
+import time
+import os
+import glob
 from dateutil import rrule
 from datetime import datetime, timedelta
 
