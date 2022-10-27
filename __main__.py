@@ -8,16 +8,17 @@ from scripts import CheckPostScripts, CheckPreScripts
 
 # MAIN
 if __name__ == "__main__":
+    # PLEASE ADJUST BEFORE RUNNING:
+    CONFIG_FILE_NAME = "config_9_ComPAS_CPC_Partektor.ini"
+    
     # Time Performance Check
     dateTimeStart = datetime.now()
 
     # Default directory of the script
-    defaultDirectoryOfThisScript = os.path.abspath(
-        os.path.abspath(os.path.dirname(sys.argv[0]))) + "/"
+    defaultDirectoryOfThisScript = os.path.abspath(os.path.dirname(sys.argv[0]))
 
     # Default path to config.ini file
-    configFilePath = defaultDirectoryOfThisScript + \
-        "config_9_ComPAS_CPC_Partektor.ini"
+    configFilePath = os.path.join(defaultDirectoryOfThisScript,"configs",CONFIG_FILE_NAME)
 
     # Arguments
     parser = argparse.ArgumentParser(description='Sensors utilities')
