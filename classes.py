@@ -73,6 +73,7 @@ class sensor_df(object):
         else:
             raise Exception(
                 "There is no column named {col}".format(col=columnName))
+        del (columnNamesList)
 
     def NPolynomialModifyDf(self, columnName, coefficientsList=[0, 1]):
         """Polynomial modification of the given column in this dataframe.
@@ -93,14 +94,13 @@ class sensor_df(object):
         else:
             raise Exception(
                 "There is no column named {col}".format(col=columnName))
+        del (columnNamesList)
 
     def addSubsetToDf(self, otherDf, newColumnNameList=None):
         """Adds a dataframe (to the right) to this dataframe.
             otherDf = dataframe to join (panda dataframe)
             newColumnNameList = new column name (list of str)"""
-        if newColumnNameList == None:
-            newColumnNameList = otherDf.columns.values.tolist().copy()
-        else:
+        if newColumnNameList != None:
             otherDf.columns = newColumnNameList
 
         self.df = self.df.join(otherDf)
