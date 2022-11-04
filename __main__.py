@@ -169,7 +169,7 @@ if __name__ == "__main__":
         sensorModelSettingsPathsList = [os.path.join(
             modelsDataDir, sensorConfigFiles[k]) for k in range(len(sensorConfigFiles))]
 
-    # Initializiation CompleteN
+    # Initializiation Complete
     print('---------------------------------', file=sys.stderr)
 
     # if isSensorNewInitialized is true, skip averaging process etc.
