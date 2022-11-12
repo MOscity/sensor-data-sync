@@ -1,17 +1,21 @@
 import lib
 from lib import sys, os, glob, configparser, argparse
 from lib import pd, datetime, timedelta, allantools, np
-
-from classes import sensor_df, Sensor
-from functions import calculateIntervals, calculateIntervalsAsDefinedInCSVFile, createSimplePlot, createInitFileFromDictionary, headerFormatter
-from scripts import CheckPostScripts, CheckPreScripts
+from classes import Sensor, sensor_df
+# from class_sensor_df import sensor_df
+from plot_functions import createSimplePlot, createAllanDeviationPlot
+from util_functions import calculateIntervals, calculateIntervalsAsDefinedInCSVFile, createInitFileFromDictionary, headerFormatter
+from scripts_functions import CheckPostScripts, CheckPreScripts
 
 # MAIN
 if __name__ == "__main__":
     #################################
     # PLEASE ADJUST BEFORE RUNNING:
-    CONFIG_FILE_NAME = "config_9_ComPr.ini"
-
+    CONFIG_FILE_NAME = "./../configs/config_10_Local_Testing.ini"
+    # and also check the contents of these files, if all is setup as you wish:
+    # - ./configs/<your-config-file>.iniss
+    # - ./custom_scripts/<your-script>.py
+    # -
     # Change NUMBER_OF_MAX_SENSORS if you need more then 10 sensors, and then add accordingly new lines for
     # data paths, settings path, use_sensor_i, etc. in config.ini (see pattern of the first 10 sensors).
     NUMBER_OF_MAX_SENSORS = 10
@@ -61,8 +65,8 @@ if __name__ == "__main__":
             config['settingsInit']['isSensorNewInitialized'])
         newSensorModelName = eval(config['settingsInit']['newSensorModelName'])
 
-        newSensorDataCompletePath = os.path.join(eval(config['settingsInit']['newSensorDataDirectoryPathString']), eval(
-            config['settingsInit']['newSensorDataFileNameString']))
+        newSensorDataCompletePath = os.path.join(eval(config['settingsInit']['newSensorDataDirectoryPathString']),
+                                                 eval(config['settingsInit']['newSensorDataFileNameString']))
         numberOfRowsToSkipInNewSensorData = eval(
             config['settingsInit']['numberOfRowsToSkipInNewSensorData'])
         nameOfTimeColumnInNewSensorData = eval(
@@ -94,11 +98,10 @@ if __name__ == "__main__":
             config['settingsOutput']['exportDirectoryPathString'])
         exportFileNameString = eval(
             config['settingsOutput']['exportFileNameString'])
-        exportBasePathString = os.path.join(
-            exportDirectoryPathString, exportFileNameString)
+        exportBasePathString = os.path.abspath(exportDirectoryPathString)
 
         exportCompletePathString = os.path.join(
-            exportBasePathString, f'_{outputInterval}{outputIntervalUnits}.csv')
+            exportBasePathString, f'{exportFileNameString}_{outputInterval}{outputIntervalUnits}.csv')
         if exportStartDate != None and exportEndDate != None:
             exportStartPandaDateTime = pd.to_datetime(
                 exportStartDate, format='%d.%m.%Y')
@@ -112,7 +115,7 @@ if __name__ == "__main__":
             sensorsToBeProcessedBooleanList.append(
                 eval(config['settingsOutput']['isSensorProcessed_'+str(k+1)]))
             sensorDataPathsList.append(os.path.join(eval(config['settingsGeneral']['sensorDataDirectoryPathString_'+str(
-                k)]), eval(config['settingsGeneral']['sensorDataFileExtensionString_'+str(k+1)])))
+                k+1)]), eval(config['settingsGeneral']['sensorDataFileExtensionString_'+str(k+1)])))
             sensorModelSettingsPathsList.append(os.path.join(defaultDir, eval(
                 config['settingsGeneral']['sensorModelSettingsRelativePathString_'+str(k+1)])))
 
@@ -142,7 +145,7 @@ if __name__ == "__main__":
         areAdditionalFilesExportedForEachDay = False
 
         exportCompletePathString = os.path.join(
-            defaultDir, 'output', f'Sample_Average_out_{outputInterval}{outputIntervalUnits}.csv')
+            defaultDir, 'sample_output', f'Sample_Average_out_{outputInterval}{outputIntervalUnits}.csv')
 
         sampleDataDir = os.path.join(defaultDir, 'sample_datas')
         modelsDataDir = os.path.join(defaultDir, 'models_settings')
@@ -205,15 +208,15 @@ if __name__ == "__main__":
             dateTimeOriginNewSensor = pd.to_datetime('1900/01/01')
 
         # Create sensor object and read data
-        mySensor = Sensor(sensorName,
-                          newSensorModelName,
-                          newSensorDataCompletePath,
-                          numberOfRowsToSkip=numberOfRowsToSkipInNewSensorData,
-                          timeColumnName=nameOfTimeColumnInNewSensorData,
-                          timeColumnFormat=formatStyleOfTimeColumnInNewSensorData,
-                          dateTimeOrigin=dateTimeOriginNewSensor,
-                          timeIntervalUnitsString=timeIntervalUnitsStringNewSensor
-                          )
+        mySensor = Sensor.Sensor(sensorName,
+                                 newSensorModelName,
+                                 newSensorDataCompletePath,
+                                 numberOfRowsToSkip=numberOfRowsToSkipInNewSensorData,
+                                 timeColumnName=nameOfTimeColumnInNewSensorData,
+                                 timeColumnFormat=formatStyleOfTimeColumnInNewSensorData,
+                                 dateTimeOrigin=dateTimeOriginNewSensor,
+                                 timeIntervalUnitsString=timeIntervalUnitsStringNewSensor
+                                 )
         headerListOut = list(mySensor.signals)
 
         # create new dictionary for modelsettings file
@@ -242,7 +245,7 @@ if __name__ == "__main__":
         print('------', file=sys.stderr)
         print(
             f"Saved settings .ini file for model {newSensorModelName} in:\n>>{os.path.join(defaultDir,relativeFilePathOfInit)}")
-        print("\nAccess sensor object functions with mySensor.<>,\nor see documentation with help(mySensor)\nor clear memory with del(mySensor).", file=sys.stderr)
+        print("\nIf you want to access the sensor object functions, add a breakpoint here.\nAccess then within your python shell the functions with mySensor.<>,\nor see documentation with help(mySensor)\nor clear memory with del(mySensor).", file=sys.stderr)
 
         # Clear Memory
         # del(mySensor)
@@ -252,8 +255,12 @@ if __name__ == "__main__":
     elif isProcessStarted:
 
         print('Synchronizing data', file=sys.stderr)
-        print('Units:\t\t\t\t', outputIntervalUnits, file=sys.stderr)
-        print('Intervals:\t\t\t', outputInterval, file=sys.stderr)
+        if not args.CSV:
+            print('Units:\t\t\t\t', outputIntervalUnits, file=sys.stderr)
+            print('Intervals:\t\t\t', outputInterval, file=sys.stderr)
+        else:
+            print('Units:\t\t\t\t <CSV Defined>', file=sys.stderr)
+            print('Intervals:\t\t\t <CSV Defined>', file=sys.stderr)
         print('Forward Fill:\t\t\t', isFilledForward, file=sys.stderr)
         print('Back Fill:\t\t\t', isFilledBackward, file=sys.stderr)
         print('First Forward Fill?:\t\t',
@@ -265,7 +272,7 @@ if __name__ == "__main__":
             print(f'Sensor {index+1}:\t\t\t', value, file=sys.stderr)
 
         # create new dataframe to merge all datas in (stack horizontally)
-        dfAllEventsOfAllSensors = sensor_df(pd.DataFrame())
+        dfAllEventsOfAllSensors = sensor_df.sensor_df(pd.DataFrame())
         exportHeaderListRenamed = []
 
         # count the sensors used, for debug purpose
@@ -325,70 +332,79 @@ if __name__ == "__main__":
                     f">> {os.path.basename(os.path.normpath(sensorDataPathString))}", file=sys.stderr)
 
                 # create new dataframe if reading list of datasets, to append them (stack vertically)
-                dfAllEventsOfOneSensor = sensor_df(pd.DataFrame())
+                dfAllEventsOfOneSensor = sensor_df.sensor_df(pd.DataFrame())
 
                 # * means all if need specific format then *.csv, or specific file start then <File Start>*
                 sensorDataFilesList = glob.glob(sensorDataPathString)
 
-                for sensorDataFile in sensorDataFilesList:
-                    print(
-                        f"- {os.path.basename(os.path.normpath(sensorDataFile))}", file=sys.stderr)
+                try:
 
-                    # Crate Sensor Object with given parameters
-                    sensorObject = Sensor(sensorName, modelName, sensorDataFile,
-                                          headerList=headerList, exportHeaderList=exportHeaderList,
-                                          unitsOfColumnsDictionary=unitsOfColumnsDictionary,
-                                          timeColumnName=timeColumnName, timeColumnFormat=timeColumnFormat,
-                                          dataSeparator=dataSeparator, numberOfRowsToSkip=numberOfRowsToSkip,
-                                          plotColumn=plotColumn,
-                                          timeIntervalUnitsString=timeIntervalUnitsString,
-                                          dateTimeOrigin=dateTimeOrigin)
+                    for sensorDataFile in sensorDataFilesList:
+                        print(
+                            f"- {os.path.basename(os.path.normpath(sensorDataFile))}", file=sys.stderr)
 
-                    sensorObject = CheckPreScripts(sensorObject)
-                    # Calculate averages of export signals:
-                    if args.CSV:  # if CSV file is provided
-                        dfIntervalsToExport = calculateIntervalsAsDefinedInCSVFile(
-                            args.CSV, sensorObject.df1, column=sensorObject.signalsForExport)
-                    else:  # as config.ini or arguments given
-                        dfIntervalsToExport = calculateIntervals(
-                            sensorObject.df1, freq=outputInterval, mode=outputIntervalUnits, column=sensorObject.signalsForExport, decimals=9)
+                        # Crate Sensor Object with given parameters
+                        sensorObject = Sensor.Sensor(sensorName, modelName, sensorDataFile,
+                                                     headerList=headerList, exportHeaderList=exportHeaderList,
+                                                     unitsOfColumnsDictionary=unitsOfColumnsDictionary,
+                                                     timeColumnName=timeColumnName, timeColumnFormat=timeColumnFormat,
+                                                     dataSeparator=dataSeparator, numberOfRowsToSkip=numberOfRowsToSkip,
+                                                     plotColumn=plotColumn,
+                                                     timeIntervalUnitsString=timeIntervalUnitsString,
+                                                     dateTimeOrigin=dateTimeOrigin)
 
-                    # Calibrations and custom Scripts after average
-                    if len(dfIntervalsToExport) > 0:
-                        sensorObject.df2 = sensor_df(
-                            dfIntervalsToExport.copy())
-                        # sensorObject.df2 = CheckPostScripts(sensor_df(dfIntervalsToExport.copy()), modelName=modelName)
-                        sensorObject = CheckPostScripts(sensorObject)
+                        sensorObject = CheckPreScripts(sensorObject)
+                        # Calculate averages of export signals:
+                        if args.CSV:  # if CSV file is provided
+                            dfIntervalsToExport = calculateIntervalsAsDefinedInCSVFile(
+                                args.CSV, sensorObject.df1, column=sensorObject.signalsForExport)
+                        else:  # as config.ini or arguments given
+                            dfIntervalsToExport = calculateIntervals(
+                                sensorObject.df1, freq=outputInterval, mode=outputIntervalUnits, column=sensorObject.signalsForExport, decimals=9)
 
-                        # # Make 1 Graph, defined per plotColumn
-                        if (sensorObject.df2.df.columns.values.tolist().count(sensorObject.plotColumn) > 0):
-                            yDataToPlot = sensorObject.df2.df[sensorObject.plotColumn]
-                            plotTitle = f"Sensor: {modelName}"
-                            if len(yDataToPlot) > 0:
-                                if sensorObject.unitsOfColumnsDictionary != None:
-                                    createSimplePlot(yDataToPlot, yunits=sensorObject.unitsOfColumnsDictionary.get(
-                                        sensorObject.plotColumn, ''), title=plotTitle, yTitle=str(sensorObject.plotColumn))
-                                else:
-                                    createSimplePlot(yDataToPlot, yunits='', title=plotTitle, yTitle=str(
-                                        sensorObject.plotColumn))
+                        # Calibrations and custom Scripts after average
+                        if len(dfIntervalsToExport) > 0:
+                            sensorObject.df2 = sensor_df.sensor_df(
+                                dfIntervalsToExport.copy())
+                            # sensorObject.df2 = CheckPostScripts(sensor_df.sensor_df(dfIntervalsToExport.copy()), modelName=modelName)
+                            sensorObject = CheckPostScripts(sensorObject)
 
-                        if isFilledFirstForwardThenBackward and isFilledForward:
-                            sensorObject.df2.df = sensorObject.df2.df.ffill()
+                            # # Make 1 Graph, defined per plotColumn
+                            if (sensorObject.df2.df.columns.values.tolist().count(sensorObject.plotColumn) > 0):
+                                yDataToPlot = sensorObject.df2.df[sensorObject.plotColumn]
+                                plotTitle = f"Sensor: {modelName}"
+                                if len(yDataToPlot) > 0:
+                                    if sensorObject.unitsOfColumnsDictionary != None:
+                                        createSimplePlot(yDataToPlot, yunits=sensorObject.unitsOfColumnsDictionary.get(
+                                            sensorObject.plotColumn, ''), title=plotTitle, yTitle=str(sensorObject.plotColumn))
+                                    else:
+                                        createSimplePlot(yDataToPlot, yunits='', title=plotTitle, yTitle=str(
+                                            sensorObject.plotColumn))
 
-                        if isFilledBackward:
-                            sensorObject.df2.df = sensorObject.df2.df.backfill()
+                            if isFilledFirstForwardThenBackward and isFilledForward:
+                                sensorObject.df2.df = sensorObject.df2.df.ffill()
 
-                        if (not isFilledFirstForwardThenBackward) and isFilledForward:
-                            sensorObject.df2.df = sensorObject.df2.df.ffill()
+                            if isFilledBackward:
+                                sensorObject.df2.df = sensorObject.df2.df.backfill()
 
-                        # Join Dataframes and stack vertically
-                        dfAllEventsOfOneSensor = sensor_df(pd.concat(
-                            [dfAllEventsOfOneSensor.df, sensorObject.df2.df]).sort_values('end'))
+                            if (not isFilledFirstForwardThenBackward) and isFilledForward:
+                                sensorObject.df2.df = sensorObject.df2.df.ffill()
 
-                    # # Clear Memory
-                    del (dfIntervalsToExport)
-                    del (sensorObject)
+                            # Join Dataframes and stack vertically
+                            dfAllEventsOfOneSensor = sensor_df.sensor_df(pd.concat(
+                                [dfAllEventsOfOneSensor.df, sensorObject.df2.df]).sort_values('end'))
 
+                        # # Clear Memory
+                        del (dfIntervalsToExport)
+                        del (sensorObject)
+
+                except:
+                    print('\n###############################\n')
+                    print('Something went wrong when reading. Maybe check paths?',
+                          file=sys.stderr)
+                    print(f'This is the current path: {sensorDataPathString}')
+                    print(f'And this is what glob.glob found: {sensorDataFilesList}')
+                    print('\n###############################\nOriginal Error Message:\n\n')
                 # # Remove time columns with 'start' timestamps.
                 dfAllEventsOfOneSensor.removeColumnFromDf('start')
                 dfAllEventsOfAllSensors.removeColumnFromDf('start')
@@ -405,15 +421,35 @@ if __name__ == "__main__":
                         '-', '_') + str_value
                     exportHeaderListRenamed.append(new_cols_to_add[str_indx])
 
-                # # Join Dataframes and stack horizontally
-                dfAllEventsOfAllSensors = sensor_df(dfAllEventsOfAllSensors.df.join(
-                    dfAllEventsOfOneSensor.df, rsuffix=f'_{modelName}', how='outer').sort_values('end'))
-
+                try:
+                    # # Join Dataframes and stack horizontally
+                    dfAllEventsOfAllSensors = sensor_df.sensor_df(dfAllEventsOfAllSensors.df.join(
+                        dfAllEventsOfOneSensor.df, rsuffix=f'_{modelName}', how='outer').sort_values('end'))
+                except:
+                    print('\n###############################\n')
+                    print('Something went wrong at joining dataframes.\nMaybe check paths first?\n',
+                          file=sys.stderr)
+                    print(f'This is the current path: {sensorDataPathString}')
+                    print(f'And this is what glob.glob found: {sensorDataFilesList}')
+                    print('\n-----------------------------\n')
+                    print(f'The left-hand side Dataframe header is:\n{dfAllEventsOfAllSensors.df.head()}')
+                    print('-----------------------------\n')
+                    print(f'And the RHS Dataframe header is:\n{dfAllEventsOfOneSensor.df.head()}')
+                    print('-----------------------------\n\n')
+                    if args.CSV:
+                        print('If you provided an .CSV file, make sure your data is within the specified start and end dates.')
+                        print(args.CSV)
+                    print('\n###############################\nOriginal Error Message:\n\n')
+                    
                 # # Clear Memory
                 del (dfAllEventsOfOneSensor)
 
         # drop duplicate entries at the end if there are any
         dfAllEventsOfAllSensors.df = dfAllEventsOfAllSensors.df.drop_duplicates()
+
+        if not os.path.exists(os.path.dirname(exportCompletePathString)):
+            print(f'Directory did not exist, creating {exportCompletePathString} ...')
+            os.makedirs(exportCompletePathString)
 
         # # Save exports
         dfAllEventsOfAllSensors.df.to_csv(exportCompletePathString, sep=';',
@@ -494,7 +530,7 @@ if __name__ == "__main__":
         print('------', file=sys.stderr)
         print('Synchronization complete.', file=sys.stderr)
         print('------', file=sys.stderr)
-        print("\nAccess merged dataframe with dfAllEventsOfAllSensors.<>,\nor see documentation with help(dfAllEventsOfAllSensors)\nor clear memory with del(dfAllEventsOfAllSensors).", file=sys.stderr)
+        # print("\nAccess merged dataframe with dfAllEventsOfAllSensors.<>,\nor see documentation with help(dfAllEventsOfAllSensors)\nor clear memory with del(dfAllEventsOfAllSensors).", file=sys.stderr)
 
     else:
         print('Aborted.')
