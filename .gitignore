@@ -2,3 +2,15 @@ lib/__pycache__/__init__.cpython-310.pyc
 __pycache__/classes.cpython-310.pyc
 __pycache__/functions.cpython-310.pyc
 __pycache__/scripts.cpython-310.pyc
+Pipfile.lock
+configs/config_1_Messkampagne.ini
+configs/config_2_Aussenluft_Slice.ini
+configs/config_2_Aussenluft.ini
+configs/config_3_ComPAS.ini
+configs/config_4.ini
+configs/config_5_Aussenluft.ini
+configs/config_6_ComPAS-V6.ini
+configs/config_7_Aussenluft_Mai.ini
+configs/config_8_NigrosinMonodispers.ini
+configs/config_9_ComPAS_CPC_Partektor.ini
+configs/config_10_Local_Testing.ini
