@@ -4,3 +4,8 @@ __pycache__/functions.cpython-310.pyc
 __pycache__/scripts.cpython-310.pyc
 Pipfile.lock
 configs/config_template_local_testing.ini
+
+# If in WSL environment (e.g. your path is /mnt/c/Users/... instead of C:/Users/...) you can create
+# a directory called 'C*/export/path' within this directory, if you call ./main.sh --export_dir='C:/export/path'
+# If in WSL, make your export path also /mnt/c/export/path and not C:/export/path
+C:
