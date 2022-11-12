@@ -1,8 +1,6 @@
-import lib
 from lib import sys, os, glob, configparser, argparse
-from lib import pd, datetime, timedelta, allantools, np
+from lib import pd, datetime, timedelta, allantools
 from classes import sensor, sensor_df
-# from class_sensor_df import sensor_df
 from plot_functions import createSimplePlot, createAllanDeviationPlot
 from util_functions import calculateIntervals, calculateIntervalsAsDefinedInCSVFile, createInitFileFromDictionary, headerFormatter
 from scripts_functions import CheckPostScripts, CheckPreScripts

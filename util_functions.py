@@ -1,4 +1,4 @@
-from lib import rrule, timedelta, pd, register_matplotlib_converters, plt, mdates, FuncFormatter
+from lib import rrule, timedelta, pd
 
 
 def headerFormatter(header_list, replace_signs=['[', ']', '{', '}', '(', ')', '$', ':', ';', '.', '-', '#', '&', '/', '\\', '%', '^', '°']):

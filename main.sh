@@ -47,6 +47,7 @@ EXPORT_DIR="/mnt/d/FHNW/2021_ComPAS/Path_With_No_Spaces/"
 #   ./main.sh kwargs --interval 3 --export_dir 'C:/mypath'
 #   ./main.sh kwargs --export_dir='C:/mypath'
 #   ./main.sh kwargs --csv_intervals='configs/intervals.csv' --export_dir='C:/mypath'
+#   ./main.sh kwargs --csv_intervals='configs/intervals.csv' --export_dir='C:/mypath' --inifile='configs/config_template_local_testing.ini'
 #
 ########################################################s##
 
