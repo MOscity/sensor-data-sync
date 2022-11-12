@@ -37,7 +37,7 @@ if __name__ == "__main__":
     parser.add_argument('--inifile', required=False, dest='INI', default=configFilePath,
                         help=f"Path to configuration(.ini) file ({configFilePath} if omitted)")
 
-    parser.add_argument('--csv_intervals', required=False, dest='CSV', type=argparse.FileType('r'),
+    parser.add_argument('--csv_intervals', required=False, dest='CSV', default=None,  # type=argparse.FileType('r'),
                         help='csv file with start and end timestamps columns. '
                         'First row must be the column names (i.e. "start" and "end"). '
                         'Uses intervals as defined in config.ini if this argument is '
@@ -111,6 +111,14 @@ if __name__ == "__main__":
         else:
             outputIntervalUnits = eval(
                 config['settingsOutput']['outputIntervalUnits'])
+
+        if args.CSV:
+            CSV_df = pd.read_csv(args.CSV,
+                                 index_col=False,
+                                 parse_dates=['start', 'end'])
+            outputInterval = int(pd.to_datetime(
+                CSV_df['end']).diff(1).dt.total_seconds().mean())
+            outputIntervalUnits = 'sec'
 
         isFilledForward = eval(config['settingsOutput']['isFilledForward'])
         isFilledBackward = eval(config['settingsOutput']['isFilledBackward'])
@@ -316,8 +324,9 @@ if __name__ == "__main__":
             print('Units:\t\t\t\t', outputIntervalUnits, file=sys.stderr)
             print('Intervals:\t\t\t', outputInterval, file=sys.stderr)
         else:
-            print('Units:\t\t\t\t <CSV Defined>', file=sys.stderr)
-            print('Intervals:\t\t\t <CSV Defined>', file=sys.stderr)
+            print(
+                f'Units:\t\t\t\t <CSV Defined>: {outputInterval}', file=sys.stderr)
+            print(f'Intervals:\t\t\t <CSV Defined>: sec', file=sys.stderr)
         print('Forward Fill:\t\t\t', isFilledForward, file=sys.stderr)
         print('Back Fill:\t\t\t', isFilledBackward, file=sys.stderr)
         print('First Forward Fill?:\t\t',
@@ -414,8 +423,16 @@ if __name__ == "__main__":
                         sensorObject = CheckPreScripts(sensorObject)
                         # Calculate averages of export signals:
                         if args.CSV:  # if CSV file is provided
-                            dfIntervalsToExport = calculateIntervalsAsDefinedInCSVFile(
-                                args.CSV, sensorObject.df1, column=sensorObject.signalsForExport)
+                            try:
+                                dfIntervalsToExport = calculateIntervalsAsDefinedInCSVFile(
+                                    args.CSV, sensorObject.df1, column=sensorObject.signalsForExport)
+                            except:
+                                print(
+                                    '\n###############################\n', file=sys.stderr)
+                                print(
+                                    f"Error when reading sensor data subsets according to provided CSV file.", file=sys.stderr)
+                                print(
+                                    '\n###############################\n', file=sys.stderr)
                         else:  # as config.ini or arguments given
                             dfIntervalsToExport = calculateIntervals(
                                 sensorObject.df1, freq=outputInterval, mode=outputIntervalUnits, column=sensorObject.signalsForExport, decimals=9)
@@ -457,14 +474,17 @@ if __name__ == "__main__":
                         del (sensorObject)
 
                 except:
-                    print('\n###############################\n')
+                    print('\n###############################\n',
+                          file=sys.stderr)
                     print('Something went wrong when reading. Maybe check paths?',
                           file=sys.stderr)
-                    print(f'This is the current path: {sensorDataPathString}')
+                    print(f'This is the current path: {sensorDataPathString}',
+                          file=sys.stderr)
                     print(
-                        f'And this is what glob.glob found (check if not empty): {sensorDataFilesList}')
-                    print(
-                        '\n###############################\nOriginal Error Message:\n\n')
+                        f'And this is what glob.glob found (check if not empty): {sensorDataFilesList}',
+                        file=sys.stderr)
+                    print('\n###############################\n',
+                          file=sys.stderr)
                 # # Remove time columns with 'start' timestamps.
                 dfAllEventsOfOneSensor.removeColumnFromDf('start')
                 dfAllEventsOfAllSensors.removeColumnFromDf('start')
@@ -486,31 +506,39 @@ if __name__ == "__main__":
                     dfAllEventsOfAllSensors = sensor_df.sensor_df(dfAllEventsOfAllSensors.df.join(
                         dfAllEventsOfOneSensor.df, rsuffix=f'_{modelName}', how='outer').sort_values('end'))
                 except:
-                    print('\n###############################\n')
+                    print('\n###############################\n',
+                          file=sys.stderr)
                     print('Something went wrong at joining dataframes.\nMaybe check paths first?\n',
                           file=sys.stderr)
-                    print(f'This is the current path: {sensorDataPathString}')
+                    print(f'This is the current path: {sensorDataPathString}',
+                          file=sys.stderr)
                     print(
-                        f'And this is what glob.glob found: {sensorDataFilesList}')
-                    print('\n-----------------------------\n')
+                        f'And this is what glob.glob found: {sensorDataFilesList}',
+                        file=sys.stderr)
+                    print('\n-----------------------------\n',
+                          file=sys.stderr)
                     print(
-                        f'The left-hand side Dataframe header is:\n{dfAllEventsOfAllSensors.df.head()}')
-                    print('-----------------------------\n')
+                        f'The left-hand side Dataframe header is:\n{dfAllEventsOfAllSensors.df.head()}',
+                        file=sys.stderr)
+                    print('-----------------------------\n',
+                          file=sys.stderr)
                     print(
-                        f'And the RHS Dataframe header is:\n{dfAllEventsOfOneSensor.df.head()}')
-                    print('-----------------------------\n\n')
+                        f'And the RHS Dataframe header is:\n{dfAllEventsOfOneSensor.df.head()}',
+                        file=sys.stderr)
+                    print('-----------------------------\n\n',
+                          file=sys.stderr)
                     if args.CSV:
                         print(
                             'If you provided an .CSV file, make sure your data is within the specified start and end dates.')
                         print(args.CSV)
-                    print(
-                        '\n###############################\nOriginal Error Message:\n\n')
+                    print('\n###############################\n',
+                          file=sys.stderr)
 
-                # # Clear Memory
+                # # Clear Memory of one sensor
                 del (dfAllEventsOfOneSensor)
 
         # drop duplicate entries at the end if there are any
-        dfAllEventsOfAllSensors.df = dfAllEventsOfAllSensors.df.drop_duplicates()
+        # dfAllEventsOfAllSensors.df = dfAllEventsOfAllSensors.df.drop_duplicates()
 
         if not os.path.exists(os.path.dirname(exportCompletePathString)):
             print(

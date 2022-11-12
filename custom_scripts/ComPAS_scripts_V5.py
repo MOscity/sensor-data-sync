@@ -165,11 +165,9 @@ def ComPASV5PostScript(sensorObject, Mic_Konstant=68.07064429, Green_Amplitdue_N
         # sensorObject.df2.df['R1 [1/Mm]'] = R1_Mm_Copy
         sensorObject.df2.df['Theta1 [deg]'] = Theta1_Copy
 
-        sensorObject.df2.df['R1 [uPa]'] = sensorObject.df2.df['R1 [uPa]'].interpolate(
-        ).ffill().bfill()
+        # sensorObject.df2.df['R1 [uPa]'] = sensorObject.df2.df['R1 [uPa]'].interpolate().ffill().bfill()
         # sensorObject.df2.df['R1 [1/Mm]'] = sensorObject.df2.df['R1 [1/Mm]'].interpolate().ffill().bfill()
-        sensorObject.df2.df['Theta1 [deg]'] = sensorObject.df2.df['Theta1 [deg]'].interpolate(
-        ).ffill().bfill()
+        # sensorObject.df2.df['Theta1 [deg]'] = sensorObject.df2.df['Theta1 [deg]'].interpolate().ffill().bfill()
 
         # Calculate Signals after Average: Already subtracted X and Y BKGs in Pre-Script
         Subtracted_Signal_X = sensorObject.df2.df['X1 Subtracted']

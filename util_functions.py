@@ -135,7 +135,7 @@ def daytimeRoundToNearestInterval(t, interval=10, mode='min'):
     return t.replace(second=t_new_sec, microsecond=0, minute=t_new_min, hour=t_new_hour)+t_add
 
 
-def calculateIntervalsAsDefinedInCSVFile(intervalfile, dataframe, decimals=9, column=0, avgMode=True, numerics_only=True, TimeColumnFormatOut='Format = %Y-%m-%d %H:%M'):
+def calculateIntervalsAsDefinedInCSVFile(intervalfile, dataframe, decimals=9, column=0, avgMode=True, numerics_only=True):
     """Averages a dataframe and returns new dataframe with time intervals as defined in intervalfile.
         intervalfile =  file with interval., First row must be the column names (i.e. "start" and "end").
         dataframe =     sensor dataframe to average (sensor_df(pd.DataFrame))
@@ -150,9 +150,10 @@ def calculateIntervalsAsDefinedInCSVFile(intervalfile, dataframe, decimals=9, co
         """
     if column == 0:
         column = dataframe.df.columns.values.tolist().copy()
-    df = pd.readCSV(intervalfile,
-                    index_col=False,
-                    parse_dates=['start', 'end'])
+    df = pd.read_csv(intervalfile,
+                     index_col=False,
+                     parse_dates=['start', 'end'])
+
     for index, row in df.iterrows():
         subset = dataframe.getDfSubset(row['start'], row['end'], column)
 
