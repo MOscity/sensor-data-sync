@@ -1,7 +1,7 @@
 import lib
 from lib import sys, os, glob, configparser, argparse
 from lib import pd, datetime, timedelta, allantools, np
-from classes import Sensor, sensor_df
+from classes import sensor, sensor_df
 # from class_sensor_df import sensor_df
 from plot_functions import createSimplePlot, createAllanDeviationPlot
 from util_functions import calculateIntervals, calculateIntervalsAsDefinedInCSVFile, createInitFileFromDictionary, headerFormatter
@@ -208,7 +208,7 @@ if __name__ == "__main__":
             dateTimeOriginNewSensor = pd.to_datetime('1900/01/01')
 
         # Create sensor object and read data
-        mySensor = Sensor.Sensor(sensorName,
+        mySensor = sensor.Sensor(sensorName,
                                  newSensorModelName,
                                  newSensorDataCompletePath,
                                  numberOfRowsToSkip=numberOfRowsToSkipInNewSensorData,
@@ -344,7 +344,7 @@ if __name__ == "__main__":
                             f"- {os.path.basename(os.path.normpath(sensorDataFile))}", file=sys.stderr)
 
                         # Crate Sensor Object with given parameters
-                        sensorObject = Sensor.Sensor(sensorName, modelName, sensorDataFile,
+                        sensorObject = sensor.Sensor(sensorName, modelName, sensorDataFile,
                                                      headerList=headerList, exportHeaderList=exportHeaderList,
                                                      unitsOfColumnsDictionary=unitsOfColumnsDictionary,
                                                      timeColumnName=timeColumnName, timeColumnFormat=timeColumnFormat,
