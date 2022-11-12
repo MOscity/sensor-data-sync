@@ -2,7 +2,7 @@
 
 ##########################################################
 #  General Configuration
-#  Adjust these parameters before you run the script
+#  Adjust these parameters before you run the script with any argument
 #
 ##########################################################
 CONFIG_FILE=configs/config_template_local_testing.ini
@@ -28,7 +28,7 @@ EXPORT_DIR="/mnt/d/FHNW/2021_ComPAS/Path_With_No_Spaces/"
 #   # Run the script with the config file and intervals file as defined here above:
 #   ./main.sh ini csv_intervals
 #
-#   # Run the script using the config file but other time intervals.
+#   # Run the script using the config file, but other time intervals.
 #   # Use with --inifile, (--csv_intervals) or (--interval and --units), --export_dir
 #   # If no options specified, it executes the same code as ./main.shs
 #   ./main.sh kwargs [options]
