@@ -8,6 +8,7 @@ def Amplitude_Phase(sensorObjectDf, X_Column, Y_Column, R_Name, Theta_Name):
         sensorObjectDf.df[Y_Column], sensorObjectDf.df[X_Column])*180.0/np.pi}, index=sensorObjectDf.df.index)
     return new_R, new_Th
 
+
 def ComPASV5PreScript(sensorObject):
     # # Resample to 1s, as it should be at ComPAS
     # timeIntervals = '1S' # 1 Second
@@ -102,7 +103,7 @@ def ComPASV5PreScript(sensorObject):
     return sensorObject
 
 
-def ComPASV5PostScript(sensorObject, Mic_Konstant = 68.07064429, Green_Amplitdue_NO2_1ppm = 1250, Green_Absorption_NO2_1ppm = 415.46 ):
+def ComPASV5PostScript(sensorObject, Mic_Konstant=68.07064429, Green_Amplitdue_NO2_1ppm=1250, Green_Absorption_NO2_1ppm=415.46):
     # Special Constants
     # Mic_Konstant = 214.7483648
     # Mic_Konstant = 215.2582778

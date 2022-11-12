@@ -11,4 +11,3 @@ def miniPTIPreScript(sensorObject):
 
 def miniPTIPostScript(sensorObject):
     return sensorObject
-

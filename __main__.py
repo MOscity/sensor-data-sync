@@ -403,8 +403,10 @@ if __name__ == "__main__":
                     print('Something went wrong when reading. Maybe check paths?',
                           file=sys.stderr)
                     print(f'This is the current path: {sensorDataPathString}')
-                    print(f'And this is what glob.glob found: {sensorDataFilesList}')
-                    print('\n###############################\nOriginal Error Message:\n\n')
+                    print(
+                        f'And this is what glob.glob found: {sensorDataFilesList}')
+                    print(
+                        '\n###############################\nOriginal Error Message:\n\n')
                 # # Remove time columns with 'start' timestamps.
                 dfAllEventsOfOneSensor.removeColumnFromDf('start')
                 dfAllEventsOfAllSensors.removeColumnFromDf('start')
@@ -430,17 +432,22 @@ if __name__ == "__main__":
                     print('Something went wrong at joining dataframes.\nMaybe check paths first?\n',
                           file=sys.stderr)
                     print(f'This is the current path: {sensorDataPathString}')
-                    print(f'And this is what glob.glob found: {sensorDataFilesList}')
+                    print(
+                        f'And this is what glob.glob found: {sensorDataFilesList}')
                     print('\n-----------------------------\n')
-                    print(f'The left-hand side Dataframe header is:\n{dfAllEventsOfAllSensors.df.head()}')
+                    print(
+                        f'The left-hand side Dataframe header is:\n{dfAllEventsOfAllSensors.df.head()}')
                     print('-----------------------------\n')
-                    print(f'And the RHS Dataframe header is:\n{dfAllEventsOfOneSensor.df.head()}')
+                    print(
+                        f'And the RHS Dataframe header is:\n{dfAllEventsOfOneSensor.df.head()}')
                     print('-----------------------------\n\n')
                     if args.CSV:
-                        print('If you provided an .CSV file, make sure your data is within the specified start and end dates.')
+                        print(
+                            'If you provided an .CSV file, make sure your data is within the specified start and end dates.')
                         print(args.CSV)
-                    print('\n###############################\nOriginal Error Message:\n\n')
-                    
+                    print(
+                        '\n###############################\nOriginal Error Message:\n\n')
+
                 # # Clear Memory
                 del (dfAllEventsOfOneSensor)
 
@@ -448,7 +455,8 @@ if __name__ == "__main__":
         dfAllEventsOfAllSensors.df = dfAllEventsOfAllSensors.df.drop_duplicates()
 
         if not os.path.exists(os.path.dirname(exportCompletePathString)):
-            print(f'Directory did not exist, creating {exportCompletePathString} ...')
+            print(
+                f'Directory did not exist, creating {exportCompletePathString} ...')
             os.makedirs(exportCompletePathString)
 
         # # Save exports

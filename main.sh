@@ -8,14 +8,11 @@
 CONFIG_FILE=configs/config_10_Local_Testing.ini
 INTERVALS_FILE=configs/intervals.csv
 
-
 ##########################################################
 #
 #   End of inputs
 #
 ##########################################################
-
-
 
 # Read Configs.ini
 source <(grep = ${CONFIG_FILE} | sed 's/ *= */=/g')
@@ -28,10 +25,10 @@ echo '--------------------'
 # works
 # Wrapper function to print the command being run
 function run {
-  # shellcheck disable=SC2145
-  echo "$ $@"
-  "$@"
-  echo '####################'
+    # shellcheck disable=SC2145
+    echo "$ $@"
+    "$@"
+    echo '####################'
 }
 
 # First the ones with 2 modes (second is)
