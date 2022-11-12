@@ -1,5 +1,6 @@
 from lib import pd
 
+
 class sensor_df(object):
     def __init__(self, df=pd.DataFrame()):
         """Initialize sensor dataframe object.

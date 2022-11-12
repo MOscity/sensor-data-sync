@@ -16,4 +16,3 @@ def MSPTI_MetasPreScript(sensorObject):
 
 def MSPTI_MetasPostScript(sensorObject):
     return sensorObject
-

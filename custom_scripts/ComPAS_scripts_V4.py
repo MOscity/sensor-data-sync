@@ -1,4 +1,4 @@
-from lib import np, pd # , allantools, timedelta
+from lib import np, pd  # , allantools, timedelta
 
 
 def Amplitude_Phase(sensorObjectDf, X_Column, Y_Column, R_Name, Theta_Name):
@@ -7,6 +7,7 @@ def Amplitude_Phase(sensorObjectDf, X_Column, Y_Column, R_Name, Theta_Name):
     new_Th = pd.DataFrame({Theta_Name: np.arctan2(
         sensorObjectDf.df[Y_Column], sensorObjectDf.df[X_Column])*180.0/np.pi}, index=sensorObjectDf.df.index)
     return new_R, new_Th
+
 
 def ComPASV4PreScript(sensorObject):
 

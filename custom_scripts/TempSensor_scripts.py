@@ -8,4 +8,3 @@ def TempSensorPreScript(sensorObject):
 
 def TempSensorPostScript(sensorObject):
     return sensorObject
-
