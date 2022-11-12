@@ -1,7 +1,5 @@
 from custom_scripts import miniPTI_scripts, MSPTI_scripts, PAX_scripts, PMS_scripts, SMPS_3080_scripts, TempSensor_scripts
 from custom_scripts import AE31_and_AE33_scripts, ComPAS_scripts_V4, ComPAS_scripts_V5, ComPAS_scripts_V6
-import os
-import sys
 
 
 def CheckPreScripts(sensorObject):

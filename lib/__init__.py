@@ -1,5 +1,5 @@
 import configparser
-import argparse  # for argument parsing
+import argparse
 from dateutil.parser import parse
 import sys
 import time

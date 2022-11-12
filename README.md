@@ -272,8 +272,8 @@ Last but not least, run sensor-data-sync again and see if your custom scripts wo
   
 Note:  
   
-See implemented functions in /classes/Sensor.py and /classes/sensor_df.py.  
-- sensor_df is subclass of Sensor  
+See implemented functions in /classes/sensor.py and /classes/sensor_df.py.  
+- sensor_df is subclass of sensor  
 - sensor_df is essentialy a pandas DataFrame with some custom functions added.  
 - Sensor is a wraparound class, allowing to handle different sub-dataframes.  
 

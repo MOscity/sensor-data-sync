@@ -1,4 +1,4 @@
-from lib import rrule, timedelta, pd, register_matplotlib_converters, plt, mdates, FuncFormatter
+from lib import rrule, timedelta, pd
 
 
 def headerFormatter(header_list, replace_signs=['[', ']', '{', '}', '(', ')', '$', ':', ';', '.', '-', '#', '&', '/', '\\', '%', '^', '°']):
@@ -135,7 +135,7 @@ def daytimeRoundToNearestInterval(t, interval=10, mode='min'):
     return t.replace(second=t_new_sec, microsecond=0, minute=t_new_min, hour=t_new_hour)+t_add
 
 
-def calculateIntervalsAsDefinedInCSVFile(intervalfile, dataframe, decimals=0, column=0, avgMode=True, numerics_only=True):
+def calculateIntervalsAsDefinedInCSVFile(intervalfile, dataframe, decimals=9, column=0, avgMode=True, numerics_only=True):
     """Averages a dataframe and returns new dataframe with time intervals as defined in intervalfile.
         intervalfile =  file with interval., First row must be the column names (i.e. "start" and "end").
         dataframe =     sensor dataframe to average (sensor_df(pd.DataFrame))
@@ -150,9 +150,10 @@ def calculateIntervalsAsDefinedInCSVFile(intervalfile, dataframe, decimals=0, co
         """
     if column == 0:
         column = dataframe.df.columns.values.tolist().copy()
-    df = pd.readCSV(intervalfile,
-                    index_col=False,
-                    parse_dates=['start', 'end'])
+    df = pd.read_csv(intervalfile,
+                     index_col=False,
+                     parse_dates=['start', 'end'])
+
     for index, row in df.iterrows():
         subset = dataframe.getDfSubset(row['start'], row['end'], column)
 
@@ -167,7 +168,7 @@ def calculateIntervalsAsDefinedInCSVFile(intervalfile, dataframe, decimals=0, co
     return df
 
 
-def calculateIntervals(dataframe, freq=1, mode='min', decimals=0, column=0, avgMode=True, numerics_only=True):
+def calculateIntervals(dataframe, freq=1, mode='min', decimals=9, column=0, avgMode=True, numerics_only=True):
     """Averages a dataframe and returns new dataframe with equidistant time intervals of <freq> <mode>.
         dataframe =     sensor dataframe to average (sensor_df(pd.DataFrame))
         freq =          interval distance (int)
@@ -241,7 +242,8 @@ def calculateIntervals(dataframe, freq=1, mode='min', decimals=0, column=0, avgM
 
         subset = dataframe.getDfSubset(start_value, end_value, column)
 
-        #print('my Subset', subset)
+        # print('my Subset', subset)
+        # Uff this is dangerous...
         if len(subset) == 0:
             print('Warning! Empty Subset')
             subset = dataframe.getDfSubset(
