@@ -19,4 +19,3 @@ def SMPS3080PreScript(sensorObject):
 
 def SMPS3080PostScript(sensorObject):
     return sensorObject
-

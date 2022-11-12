@@ -11,7 +11,7 @@ from scripts_functions import CheckPostScripts, CheckPreScripts
 if __name__ == "__main__":
     #################################
     # PLEASE ADJUST BEFORE RUNNING:
-    CONFIG_FILE_NAME = "./../configs/config_10_Local_Testing.ini"
+    CONFIG_FILE_NAME = "./../configs/config_template_local_testing.ini"
     # and also check the contents of these files, if all is setup as you wish:
     # - ./configs/<your-config-file>.iniss
     # - ./custom_scripts/<your-script>.py
@@ -37,12 +37,33 @@ if __name__ == "__main__":
     parser.add_argument('--inifile', required=False, dest='INI', default=configFilePath,
                         help=f"Path to configuration(.ini) file ({configFilePath} if omitted)")
 
-    parser.add_argument('--intervals', required=False, dest='CSV', type=argparse.FileType('r'),
+    parser.add_argument('--csv_intervals', required=False, dest='CSV', type=argparse.FileType('r'),
                         help='csv file with start and end timestamps columns. '
                         'First row must be the column names (i.e. "start" and "end"). '
                         'Uses intervals as defined in config.ini if this argument is '
                         'not provided. Uses 10 minute intervals if this argument is '
                         'missing and config.ini is missing too.')
+
+    parser.add_argument('--custom_args', required=False, action='store_true', dest='custom_args', default=False,
+                        help='Activate custom arguments mode. Add optional arguments:'
+                        ' --interval'
+                        ' --units'
+                        ' --export_dir'
+                        ' --csv_intervals'
+                        'etc.'
+                        )
+
+    parser.add_argument('--interval', required=False, metavar='N', dest='N', type=int, default=1,
+                        help='Interval value between time stamps (int)'
+                        )
+    parser.add_argument('--units', required=False, dest='units', default='min',
+                        help='Interval unit between time stamps i.e. ["sec","min","hours"]'
+                        )
+
+    parser.add_argument('--export_dir', required=False, dest='export_dir', default=None,
+                        help=f'Specify an export directory path. '
+                        'Note: If the directory does not exist, it will be created.'
+                        )
 
     args = parser.parse_args()
 
@@ -55,6 +76,9 @@ if __name__ == "__main__":
     sensorModelSettingsPathsList = []
 
     config = configparser.ConfigParser()
+
+    print('---------------------------------', file=sys.stderr)
+    print(f'Reading config file: {configFilePath}', file=sys.stderr)
 
     if os.path.exists(configFilePath):
         isProcessStarted = True
@@ -77,9 +101,16 @@ if __name__ == "__main__":
             config['settingsInit']['dataSeparatorInNewSensorData'])
 
         # settingsOutput
-        outputInterval = eval(config['settingsOutput']['outputInterval'])
-        outputIntervalUnits = eval(
-            config['settingsOutput']['outputIntervalUnits'])
+        if args.N:
+            outputInterval = args.N
+        else:
+            outputInterval = eval(config['settingsOutput']['outputInterval'])
+
+        if args.units:
+            outputIntervalUnits = args.units
+        else:
+            outputIntervalUnits = eval(
+                config['settingsOutput']['outputIntervalUnits'])
 
         isFilledForward = eval(config['settingsOutput']['isFilledForward'])
         isFilledBackward = eval(config['settingsOutput']['isFilledBackward'])
@@ -94,14 +125,36 @@ if __name__ == "__main__":
         areAdditionalFilesExportedForEachDay = eval(
             config['settingsOutput']['areAdditionalFilesExportedForEachDay'])
 
-        exportDirectoryPathString = eval(
-            config['settingsOutput']['exportDirectoryPathString'])
+        if (args.export_dir is not None):
+            if not os.path.exists(args.export_dir):
+                print(
+                    f'WARNING: Directory doest not exist, attempting to create {args.export_dir} ...', file=sys.stderr)
+                try:
+                    os.makedirs(args.export_dir)
+                except:
+                    print(f'Could not create directory.', file=sys.stderr)
+            exportDirectoryPathString = args.export_dir
+        else:
+            exportDirectoryPathString = eval(
+                config['settingsOutput']['exportDirectoryPathString'])
+
         exportFileNameString = eval(
             config['settingsOutput']['exportFileNameString'])
-        exportBasePathString = os.path.abspath(exportDirectoryPathString)
 
-        exportCompletePathString = os.path.join(
-            exportBasePathString, f'{exportFileNameString}_{outputInterval}{outputIntervalUnits}.csv')
+        try:
+            exportBasePathString = os.path.abspath(exportDirectoryPathString)
+        except:
+            print(f'Please check the export directory path.')
+
+        try:
+            exportCompletePathString = os.path.join(
+                exportBasePathString, f'{exportFileNameString}_{outputInterval}{outputIntervalUnits}.csv')
+        except:
+            print(
+                f'No Interval and units given. Please specify with --interval and --units.', file=sys.stderr)
+            print(
+                '\n###############################\nOriginal Error Message:\n\n')
+
         if exportStartDate != None and exportEndDate != None:
             exportStartPandaDateTime = pd.to_datetime(
                 exportStartDate, format='%d.%m.%Y')
@@ -121,10 +174,14 @@ if __name__ == "__main__":
 
     else:  # Assume default values
 
+        print('---------------------------------', file=sys.stderr)
         print(
             f'Could not find the configuration file "{os.path.basename(os.path.normpath(configFilePath))}"', file=sys.stderr)
         print(f'Full path: {configFilePath}', file=sys.stderr)
-        isDemoString = input(f'Start Demo Mode? (type Y or Yes to start): ')
+
+        print('---------------------------------', file=sys.stderr)
+        isDemoString = input(
+            f'Start Demo Mode? (type Y or Yes to start, or anything else for No): ')
         isProcessStarted = True if (isDemoString.lower() == 'y'
                                     or isDemoString.lower() == 'yes') else False
 
@@ -266,6 +323,7 @@ if __name__ == "__main__":
         print('First Forward Fill?:\t\t',
               isFilledFirstForwardThenBackward, file=sys.stderr)
         print('Format Header:\t\t\t', isOutputHeaderFormatted, file=sys.stderr)
+        print(f'Export Path: \n{exportCompletePathString}')
         print('---------------------------------', file=sys.stderr)
 
         for index, value in enumerate(sensorsToBeProcessedBooleanList):
@@ -403,8 +461,10 @@ if __name__ == "__main__":
                     print('Something went wrong when reading. Maybe check paths?',
                           file=sys.stderr)
                     print(f'This is the current path: {sensorDataPathString}')
-                    print(f'And this is what glob.glob found: {sensorDataFilesList}')
-                    print('\n###############################\nOriginal Error Message:\n\n')
+                    print(
+                        f'And this is what glob.glob found (check if not empty): {sensorDataFilesList}')
+                    print(
+                        '\n###############################\nOriginal Error Message:\n\n')
                 # # Remove time columns with 'start' timestamps.
                 dfAllEventsOfOneSensor.removeColumnFromDf('start')
                 dfAllEventsOfAllSensors.removeColumnFromDf('start')
@@ -430,17 +490,22 @@ if __name__ == "__main__":
                     print('Something went wrong at joining dataframes.\nMaybe check paths first?\n',
                           file=sys.stderr)
                     print(f'This is the current path: {sensorDataPathString}')
-                    print(f'And this is what glob.glob found: {sensorDataFilesList}')
+                    print(
+                        f'And this is what glob.glob found: {sensorDataFilesList}')
                     print('\n-----------------------------\n')
-                    print(f'The left-hand side Dataframe header is:\n{dfAllEventsOfAllSensors.df.head()}')
+                    print(
+                        f'The left-hand side Dataframe header is:\n{dfAllEventsOfAllSensors.df.head()}')
                     print('-----------------------------\n')
-                    print(f'And the RHS Dataframe header is:\n{dfAllEventsOfOneSensor.df.head()}')
+                    print(
+                        f'And the RHS Dataframe header is:\n{dfAllEventsOfOneSensor.df.head()}')
                     print('-----------------------------\n\n')
                     if args.CSV:
-                        print('If you provided an .CSV file, make sure your data is within the specified start and end dates.')
+                        print(
+                            'If you provided an .CSV file, make sure your data is within the specified start and end dates.')
                         print(args.CSV)
-                    print('\n###############################\nOriginal Error Message:\n\n')
-                    
+                    print(
+                        '\n###############################\nOriginal Error Message:\n\n')
+
                 # # Clear Memory
                 del (dfAllEventsOfOneSensor)
 
@@ -448,8 +513,12 @@ if __name__ == "__main__":
         dfAllEventsOfAllSensors.df = dfAllEventsOfAllSensors.df.drop_duplicates()
 
         if not os.path.exists(os.path.dirname(exportCompletePathString)):
-            print(f'Directory did not exist, creating {exportCompletePathString} ...')
-            os.makedirs(exportCompletePathString)
+            print(
+                f'WARNING: Directory doest not exist, attempting to create {exportCompletePathString} ...')
+            try:
+                os.makedirs(exportCompletePathString)
+            except:
+                print(f'Could not create directory.')
 
         # # Save exports
         dfAllEventsOfAllSensors.df.to_csv(exportCompletePathString, sep=';',
@@ -480,7 +549,7 @@ if __name__ == "__main__":
             dfSubEventsOfAllSensors = dfAllEventsOfAllSensors.getDfSubset(
                 exportStartPandaDateTime, exportEndPandaDateTime)
 
-            dfSubEventsOfAllSensors.to_csv(os.path.join(exportBasePathString, f'_{outputInterval}{outputIntervalUnits}__{exportStartDate}__{exportEndDate}.csv'),
+            dfSubEventsOfAllSensors.to_csv(os.path.join(exportBasePathString, f'{exportFileNameString}_{outputInterval}{outputIntervalUnits}__{exportStartDate}__{exportEndDate}.csv'),
                                            sep=';',
                                            header=exportHeaderListRenamed, na_rep=0, quotechar='#')
 

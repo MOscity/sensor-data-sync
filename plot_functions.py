@@ -107,7 +107,7 @@ def createAllanDeviationPlot(y, x=None, yunits='##', title="mySensor", yTitle='e
 
     plt.show()
     plt.close()
-    del(box)
+    del (box)
 
 
 def createSimplePlot(y, x=None, yunits='##', title="mySensor", yTitle='eBC'):
@@ -170,5 +170,4 @@ def createSimplePlot(y, x=None, yunits='##', title="mySensor", yTitle='eBC'):
 
     plt.show()
     plt.close()
-    del(box)
-
+    del (box)

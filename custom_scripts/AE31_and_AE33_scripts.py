@@ -1,5 +1,6 @@
 from lib import pd, timedelta
 
+
 def Aeth33PreScript(sensorObject):
     # Adjust Winter to Summer time
     timelist = sensorObject.df1.df.index.tolist()
@@ -62,4 +63,3 @@ def Aeth31PreScript(sensorObject):
 
 def Aeth31PostScript(sensorObject):
     return sensorObject
-
