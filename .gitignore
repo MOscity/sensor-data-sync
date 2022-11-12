@@ -1,7 +1,4 @@
 lib/__pycache__
-__pycache__/classes.cpython-310.pyc
-__pycache__/functions.cpython-310.pyc
-__pycache__/scripts.cpython-310.pyc
 Pipfile.lock
 configs/config_template_local_testing.ini
 
