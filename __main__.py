@@ -9,7 +9,7 @@ from scripts_functions import CheckPostScripts, CheckPreScripts
 if __name__ == "__main__":
     #################################
     # PLEASE ADJUST BEFORE RUNNING:
-    CONFIG_FILE_NAME = "./../configs/config_template_local_testing.ini"
+    CONFIG_FILE_NAME = "./../configs/config_template_local_testssing.ini"
     # and also check the contents of these files, if all is setup as you wish:
     # - ./configs/<your-config-file>.iniss
     # - ./custom_scripts/<your-script>.py
@@ -75,7 +75,8 @@ if __name__ == "__main__":
 
     config = configparser.ConfigParser()
 
-    print('---------------------------------', file=sys.stderr)
+    # Cool shortcut for writng 30 times '-'
+    print(f'{"":-^36}', file=sys.stderr)
     print(f'Reading config file: {configFilePath}', file=sys.stderr)
 
     if os.path.exists(configFilePath):
@@ -156,10 +157,10 @@ if __name__ == "__main__":
             exportCompletePathString = os.path.join(
                 exportBasePathString, f'{exportFileNameString}_{outputInterval}{outputIntervalUnits}.csv')
         except:
+            print(f'{"":#^30}', file=sys.stderr)
             print(
                 f'No Interval and units given. Please specify with --interval and --units.', file=sys.stderr)
-            print(
-                '\n###############################\nOriginal Error Message:\n\n')
+            print(f'{"":#^30}', file=sys.stderr)
 
         if exportStartDate != None and exportEndDate != None:
             exportStartPandaDateTime = pd.to_datetime(
@@ -180,12 +181,12 @@ if __name__ == "__main__":
 
     else:  # Assume default values
 
-        print('---------------------------------', file=sys.stderr)
+        print(f'{"":-^36}', file=sys.stderr)
         print(
             f'Could not find the configuration file "{os.path.basename(os.path.normpath(configFilePath))}"', file=sys.stderr)
         print(f'Full path: {configFilePath}', file=sys.stderr)
 
-        print('---------------------------------', file=sys.stderr)
+        print(f'{"":-^36}', file=sys.stderr)
         isDemoString = input(
             f'Start Demo Mode? (type Y or Yes to start, or anything else for No): ')
         isProcessStarted = True if (isDemoString.lower() == 'y'
@@ -236,7 +237,7 @@ if __name__ == "__main__":
             modelsDataDir, sensorConfigFiles[k]) for k in range(len(sensorConfigFiles))]
 
     # Initializiation Complete
-    print('---------------------------------', file=sys.stderr)
+    print(f'{"":-^36}', file=sys.stderr)
 
     # if isSensorNewInitialized is true, skip averaging process etc.
     if isSensorNewInitialized:
@@ -303,16 +304,14 @@ if __name__ == "__main__":
         createInitFileFromDictionary(
             relativeFilePathOfInit, newInitDictionary)
 
-        print('------', file=sys.stderr)
+        print(f'{"":-^36}', file=sys.stderr)
         print('Initialization complete.', file=sys.stderr)
-        print('------', file=sys.stderr)
         print(
             f"Saved settings .ini file for model {newSensorModelName} in:\n>>{os.path.join(defaultDir,relativeFilePathOfInit)}")
         print("\nIf you want to access the sensor object functions, add a breakpoint here.\nAccess then within your python shell the functions with mySensor.<>,\nor see documentation with help(mySensor)\nor clear memory with del(mySensor).", file=sys.stderr)
 
         # Clear Memory
         # del(mySensor)
-        print('------', file=sys.stderr)
 
     # Else, process and synchronize
     elif isProcessStarted:
@@ -331,10 +330,11 @@ if __name__ == "__main__":
               isFilledFirstForwardThenBackward, file=sys.stderr)
         print('Format Header:\t\t\t', isOutputHeaderFormatted, file=sys.stderr)
         print(f'Export Path: \n{exportCompletePathString}')
-        print('---------------------------------', file=sys.stderr)
+        print(f'{"":-^10}', file=sys.stderr)
 
         for index, value in enumerate(sensorsToBeProcessedBooleanList):
             print(f'Sensor {index+1}:\t\t\t', value, file=sys.stderr)
+        print(f'{"":-^36}', file=sys.stderr)
 
         # create new dataframe to merge all datas in (stack horizontally)
         dfAllEventsOfAllSensors = sensor_df.sensor_df(pd.DataFrame())
@@ -346,7 +346,7 @@ if __name__ == "__main__":
         for sensor_N_isProcessed, sensorIndex_N in zip(sensorsToBeProcessedBooleanList, range(len(sensorsToBeProcessedBooleanList))):
             if sensor_N_isProcessed:
                 sensorsCounted += 1
-                print('------------------------', file=sys.stderr)
+                print(f'{"":-^20}', file=sys.stderr)
 
                 # Get Data Files and Settings
                 sensorDataPathString = sensorDataPathsList[sensorIndex_N]
@@ -425,12 +425,10 @@ if __name__ == "__main__":
                                 dfIntervalsToExport = calculateIntervalsAsDefinedInCSVFile(
                                     args.CSV, sensorObject.df1, column=sensorObject.signalsForExport)
                             except:
-                                print(
-                                    '\n###############################\n', file=sys.stderr)
+                                print(f'\n{"":#^30}\n', file=sys.stderr)
                                 print(
                                     f"Error when reading sensor data subsets according to provided CSV file.", file=sys.stderr)
-                                print(
-                                    '\n###############################\n', file=sys.stderr)
+                                print(f'\n{"":#^30}\n', file=sys.stderr)
                         else:  # as config.ini or arguments given
                             dfIntervalsToExport = calculateIntervals(
                                 sensorObject.df1, freq=outputInterval, mode=outputIntervalUnits, column=sensorObject.signalsForExport, decimals=9)
@@ -472,8 +470,7 @@ if __name__ == "__main__":
                         del (sensorObject)
 
                 except:
-                    print('\n###############################\n',
-                          file=sys.stderr)
+                    print(f'\n{"":#^30}\n', file=sys.stderr)
                     print('Something went wrong when reading. Maybe check paths?',
                           file=sys.stderr)
                     print(f'This is the current path: {sensorDataPathString}',
@@ -481,8 +478,7 @@ if __name__ == "__main__":
                     print(
                         f'And this is what glob.glob found (check if not empty): {sensorDataFilesList}',
                         file=sys.stderr)
-                    print('\n###############################\n',
-                          file=sys.stderr)
+                    print(f'\n{"":#^30}\n', file=sys.stderr)
                 # # Remove time columns with 'start' timestamps.
                 dfAllEventsOfOneSensor.removeColumnFromDf('start')
                 dfAllEventsOfAllSensors.removeColumnFromDf('start')
@@ -504,8 +500,7 @@ if __name__ == "__main__":
                     dfAllEventsOfAllSensors = sensor_df.sensor_df(dfAllEventsOfAllSensors.df.join(
                         dfAllEventsOfOneSensor.df, rsuffix=f'_{modelName}', how='outer').sort_values('end'))
                 except:
-                    print('\n###############################\n',
-                          file=sys.stderr)
+                    print(f'\n{"":#^30}\n', file=sys.stderr)
                     print('Something went wrong at joining dataframes.\nMaybe check paths first?\n',
                           file=sys.stderr)
                     print(f'This is the current path: {sensorDataPathString}',
@@ -513,24 +508,20 @@ if __name__ == "__main__":
                     print(
                         f'And this is what glob.glob found: {sensorDataFilesList}',
                         file=sys.stderr)
-                    print('\n-----------------------------\n',
-                          file=sys.stderr)
+                    print(f'{"":-^15}', file=sys.stderr)
                     print(
                         f'The left-hand side Dataframe header is:\n{dfAllEventsOfAllSensors.df.head()}',
                         file=sys.stderr)
-                    print('-----------------------------\n',
-                          file=sys.stderr)
+                    print(f'{"":-^15}', file=sys.stderr)
                     print(
                         f'And the RHS Dataframe header is:\n{dfAllEventsOfOneSensor.df.head()}',
                         file=sys.stderr)
-                    print('-----------------------------\n\n',
-                          file=sys.stderr)
+                    print(f'{"":-^15}', file=sys.stderr)
                     if args.CSV:
                         print(
                             'If you provided an .CSV file, make sure your data is within the specified start and end dates.')
                         print(args.CSV)
-                    print('\n###############################\n',
-                          file=sys.stderr)
+                    print(f'\n{"":#^30}\n', file=sys.stderr)
 
                 # # Clear Memory of one sensor
                 del (dfAllEventsOfOneSensor)
@@ -622,15 +613,15 @@ if __name__ == "__main__":
         # # Clear Memory
         del (dfAllEventsOfAllSensors)
 
-        print('------', file=sys.stderr)
+        print(f'{"":-^36}', file=sys.stderr)
         print('Synchronization complete.', file=sys.stderr)
-        print('------', file=sys.stderr)
         # print("\nAccess merged dataframe with dfAllEventsOfAllSensors.<>,\nor see documentation with help(dfAllEventsOfAllSensors)\nor clear memory with del(dfAllEventsOfAllSensors).", file=sys.stderr)
 
     else:
         print('Aborted.')
 
     dateTimeEnd = datetime.now()
-    print('------------------------', file=sys.stderr)
+    print(f'{"":-^36}', file=sys.stderr)
     print('Done. Code executed in', dateTimeEnd -
           dateTimeStart, file=sys.stderr)
+    print(f'{"":-^36}', file=sys.stderr)

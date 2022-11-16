@@ -1,5 +1,8 @@
 lib/__pycache__
 Pipfile.lock
+custom_scripts/__pycache__
+__pycache__
+classes/__pycache__
 configs/config_template_local_testing.ini
 
 # If in WSL environment (e.g. your path is /mnt/c/Users/... instead of C:/Users/...) you can create

@@ -5,7 +5,7 @@ def SMPS3080_ExpPreScript(sensorObject):
     # Use this script if data were already processed by Ernest's excel sheet 'script'.
     timeIntervals = '60S'  # 10 Second
     sensorObject.df1.df = sensorObject.df1.df.resample(
-        timeIntervals).pad().interpolate().ffill().bfill()
+        timeIntervals).ffill().bfill().interpolate()
     return sensorObject
 
 
