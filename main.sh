@@ -2,7 +2,7 @@
 
 ##########################################################
 #  General Configuration
-#  Adjust these parameters before you run the script with any argument
+#  You may consider to adjust these parameters before you run this script
 #
 ##########################################################
 CONFIG_FILE=configs/config_template_local_testing.ini
@@ -28,18 +28,22 @@ EXPORT_DIR="/mnt/d/FHNW/2021_ComPAS/Path_With_No_Spaces/"
 #   # Run the script with the config file and intervals file as defined here above:
 #   ./main.sh ini csv_file
 #
-#   # Run the script with the intervals file as defined here above, but config file as defined in __main__.py:
-#   ./main.sh csv_files
+#   # Run the script using custom arguments with 'kwargs'.
+#   # If no arguments passed, it executes the same code as './main.sh'
+#   ./main.sh kwargs [args]
 #
-#   # Run the script using custom arguments. Arguments are:
-#   # --inifile,
-#   # --csv_intervals,
-#   # --interval and --units. If CSV file provided, these two parameters are ignored.
-#   # --export_dir
-#   # If no arguments passed, it executes the same code as './main.sh's
-#   ./main.sh kwargs [options]
+#   # args are:
+#   --inifile 'path_to_config.ini'
+#   --csv_intervals 'path_to_csv_file'
+#   --interval outputInterval
+#   --units 'outputIntervalUnits'
+#   --export_dir 'directory_path_for_export'
 #
-#   # Examples:
+#   # outputInterval = integer
+#   # outputIntervalUnits = 'sec', 'min', 'hours', 'days'
+#   # if a csv_intervals file is provided, --interval and --units are ignored.
+#
+#   # kwargs examples:
 #   ./main.sh kwargs --interval=3
 #   ./main.sh kwargs --interval 2 --units 'min'
 #   ./main.sh kwargs --interval 1 --units 'min' --export_dir='C:/mypath'
@@ -49,7 +53,7 @@ EXPORT_DIR="/mnt/d/FHNW/2021_ComPAS/Path_With_No_Spaces/"
 #   ./main.sh kwargs --csv_intervals='configs/intervals.csv' --export_dir='C:/mypath'
 #   ./main.sh kwargs --csv_intervals='configs/intervals.csv' --export_dir='C:/mypath' --inifile='configs/config_template_local_testing.ini'
 #
-########################################################s##
+##########################################################
 
 echo '##########+---------------+##########'
 # works
@@ -106,6 +110,7 @@ elif [[ $1 == 'kwargs' ]]; then
 
 else
     echo "No arguments passed."
+    echo "Running python __main__.py"
     echo '--'
     run python __main__.py
 fi

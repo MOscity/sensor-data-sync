@@ -39,29 +39,52 @@ if __name__ == "__main__":
                         help='csv file with start and end timestamps columns. '
                         'First row must be the column names (i.e. "start" and "end"). '
                         'Uses intervals as defined in config.ini if this argument is '
-                        'not provided. Uses 10 minute intervals if this argument is '
-                        'missing and config.ini is missing too.')
+                        'not provided. Uses default intervals if this argument is '
+                        'missing and config.ini is missing too.'
+                        'If a csv_intervals file is provided, --interval and --units are ignored.')
 
     parser.add_argument('--custom_args', required=False, action='store_true', dest='custom_args', default=False,
-                        help='Activate custom arguments mode. Add optional arguments:'
-                        ' --interval'
-                        ' --units'
-                        ' --export_dir'
-                        ' --csv_intervals'
-                        'etc.'
+                        help='Activate custom arguments mode. Add optional arguments afterwards.'
+                        'See readme.md or look at the other arguments defined here in main.py.'
                         )
 
     parser.add_argument('--interval', required=False, metavar='N', dest='N', type=int,
                         help='Interval value between time stamps (int)'
                         )
     parser.add_argument('--units', required=False, dest='units',
-                        help='Interval unit between time stamps i.e. ["sec","min","hours"]'
+                        help='Interval unit between time stamps i.e. ["sec","min","hours", "days"]'
                         )
 
     parser.add_argument('--export_dir', required=False, dest='export_dir', default=None,
-                        help=f'Specify an export directory path. '
+                        help=f'Specify an export directory path (Only the directory!). '
                         'Note: If the directory does not exist, it will be created.'
                         )
+
+    # parser.add_argument('--ffill', required=False, action='store_true', dest='ffill_arg', default=False,
+    #                     help=f'Activate Forward Fill. See readme.md about isFilledForward for more information.'
+    #                     )
+
+    # parser.add_argument('--bfill', required=False, action='store_true', dest='bfill_arg', default=False,
+    #                     help=f'Activate Backward Fill. See readme.md about isFilledBackward for more information.'
+    #                     )
+
+    # parser.add_argument('--ffbb', required=False, action='store_true', dest='ffbb_arg', default=False,
+    #                     help=f'Activate Fill Forward before Fill Backward, if both others are true.'
+    #                     ' See readme.md about isFilledFirstForwardThenBackward for more information.'
+    #                     )
+
+    # parser.add_argument('--format_header', required=False, action='store_true', dest='format_header_arg', default=False,
+    #                     help=f'Format the resulting header replacing all special characters'
+    #                     'with _ or another custom-defined character.'
+    #                     )
+
+    # parser.add_argument('--sensor', required=False, metavar='sensorProcess_i_arg', dest='sensorProcess_i_arg', type=list,
+    #                     help=f'Activate processing of sensor i. Provide a list like [1,2,3,...]'.
+    #                     )
+
+    # parser.add_argument('--addDailyFiles', required=False, action='store_true', dest='addDaily_args', default=False,
+    #                 help=f'Export Daily Files between given start and end date'
+    #                 )
 
     args = parser.parse_args()
 
@@ -134,6 +157,7 @@ if __name__ == "__main__":
 
         if (args.export_dir is not None):
             if not os.path.exists(args.export_dir):
+                print(f'{"":#^5}')
                 print(
                     f'WARNING: Directory doest not exist, attempting to create {args.export_dir} ...', file=sys.stderr)
                 try:
@@ -196,8 +220,8 @@ if __name__ == "__main__":
         isSensorNewInitialized = False
 
         # settingsOutput
-        outputInterval = 10
-        outputIntervalUnits = 'min'
+        outputInterval = 30
+        outputIntervalUnits = 'sec'
 
         isFilledForward = True
         isFilledBackward = True
@@ -529,6 +553,7 @@ if __name__ == "__main__":
         dfAllEventsOfAllSensors.df = dfAllEventsOfAllSensors.df.drop_duplicates()
 
         if not os.path.exists(os.path.dirname(exportCompletePathString)):
+            print(f'{"":#^5}')
             print(
                 f'WARNING: Directory doest not exist, attempting to create {exportCompletePathString} ...')
             try:

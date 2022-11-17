@@ -108,7 +108,8 @@ class sensor_df(object):
             if type(self.df[columnName][k]) == str:
                 # .find('') returns -1 if not found.
                 if self.df[columnName][k].find(badWord) >= 0:
-                    print(f'Warning: Removed row {k} due to corrupt data')
+                    print(f'{"":#^5}')
+                    print(f'WARNING: Removed row {k} due to corrupt data')
                     hasOccured = True
                     self.df.drop(labels=k, axis=0, inplace=True)
         return hasOccured
@@ -119,5 +120,6 @@ class sensor_df(object):
         columnNamesList = self.df.columns.values.tolist().copy()
         for index, columnName in enumerate(columnNamesList):
             if self.df[columnName].isnull().all() == True:
-                print(f'Warning: Removed empty column "{columnName}"')
+                print(f'{"":#^5}')
+                print(f'WARNING: Removed empty column "{columnName}"')
                 self.removeColumnFromDf(columnName)
