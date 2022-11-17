@@ -1,4 +1,4 @@
-from custom_scripts import miniPTI_scripts, MSPTI_scripts, PAX_scripts, PMS_scripts, SMPS_3080_scripts, TempSensor_scripts
+from custom_scripts import miniPTI_scripts, MSPTI_scripts, PAX_scripts, PMS_scripts, SMPS_3080_scripts, TempSensor_scripts, TempSensor_V2_scripts
 from custom_scripts import AE31_and_AE33_scripts, ComPAS_scripts_V4, ComPAS_scripts_V5, ComPAS_scripts_V6
 
 
@@ -30,6 +30,8 @@ def CheckPreScripts(sensorObject):
         return miniPTI_scripts.miniPTIPreScript(sensorObject)
     elif modelName == 'TempSensor':
         return TempSensor_scripts.TempSensorPreScript(sensorObject)
+    elif modelName == 'TempSensor_V2':
+        return TempSensor_V2_scripts.TempSensorV2PreScript(sensorObject)
     else:
         return sensorObject
 
@@ -62,5 +64,7 @@ def CheckPostScripts(sensorObject):
         return miniPTI_scripts.miniPTIPostScript(sensorObject)
     elif modelName == 'TempSensor':
         return TempSensor_scripts.TempSensorPostScript(sensorObject)
+    elif modelName == 'TempSensor_V2':
+        return TempSensor_V2_scripts.TempSensorV2PostScript(sensorObject)
     else:
         return sensorObject

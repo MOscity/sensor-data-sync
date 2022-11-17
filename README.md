@@ -1,7 +1,7 @@
 # sensor-data-sync
 
 Time-synchronizes several sensor datas in the given time intervals (building averages), with optional custom scripts for pre- and post-averaging.  
-If writing custom scripts, consider to apply linear transformations before non-linear transformations (averaging is linear)
+If writing custom scripts, consider to apply linear transformations before non-linear transformations (averaging is linear).
 
 Note: Working on update for cleaner Code :) (80% done).
 
@@ -12,35 +12,44 @@ Note: Working on update for cleaner Code :) (80% done).
 - 1.) How to setup new sensor type / model  
   a. Set input parameters for new model in config.ini  
   b. Run main.py or main.sh  
-  c. Open new created models_setings/'your-model-name'_settings.ini file and check if all is correct  
+  c. Open new created 'models_setings/your_model_settings.ini' file and check if all is correct  
 
 - 2.) Synchronization process  
   a. Configure config.ini  
   b. Run main.py or main.sh  
 
 - 3.) Create Custom Scripts (optional)  
-  a. Add your model to the functions Check_Pre_Scripts and Check_Post_Scripts  
+  a. Add your model to the functions CheckPreScripts and CheckPostScripts in scripts_functions.py  
   b. Write your own Scripts  
   c. Customize Scripts  
 
 ## 0.) Systems and Packages required  
 
 A requirements.txt file and a pipfile is provided.  
-Install your python environment as you prefer (Conda, Pipenv, ...).  
+Install a python environment as you prefer (Conda Environment, Pipenv, ...).  
+  
+If you have pyenv and pipenv, install python 3.9 (from any directory) via terminal:  
+> pyenv install 3.9  
+  
+And then mount the directory with this script and create a pipenv:  
+> cd ./path/to/this/script/  
+> pipenv install  
 
+Run the environment with  
+> pipenv shell  
+
+And open your workspace with for example VS Code:  
+> code .  
+  
 Requirements:  
-#### Python 3.9+
+##### Python 3.9  
 configparser  
 argparse  
-sys  
-os  
-glob  
 pandas  
 numpy  
-dateutil  
 allantools  
 matplotlib  
-
+  
 
 ### How To Run: 
 
@@ -48,26 +57,29 @@ matplotlib
 Open your python environment in the directory with the \_\_main\_\_.py file.  
 Open the \_\_main\_\_.py file and set the config file name in the setup section.  
  
-If you are in the directory with the \_\_main\_\_.py file, run the python script with:  
+If you are in the directory with the \_\_main\_\_.py file, run the python script from terminal with:  
 > python \_\_main\_\_.py  
  
-If you are in the parent directory, you can run the script with:  
+If you are in the parent directory, you can run the script from terminal with:  
 > python sensor-data-sync  
  
 #### main.sh  
 Open a terminal and navigate to the directory with the main.sh file.  
 Run the script with (optional args: ini, intervals, ... )  
 > ./main.sh  
-> ./main.sh ini  
-> ./main.sh ini intervals  
+> ./main.sh ini  s
+> ./main.sh ini csv_file  
+> ./main.sh kwargs [args]
+  
+See 'main.sh' for args options.
 
 ## 1.) How to setup new sensor type / model  
 
 ### a.) Set input parameters for new model in config.ini  
 
-- Open config.ini and set all values in section [settingsInit], [settingsOutput] and [settingsGeneral]  
+- Open config.ini and set all values in section [settingsInit]. 
 
-- Set INIT_NEW_SENSOR to True if you want to initialize new sensor types.  
+- Set isSensorNewInitialized to True if you want to initialize new sensor types.  
 
 ### b.) Run the script  
  
@@ -110,171 +122,161 @@ Open the output file 'your-model-name'\_settings.ini in the directory /models_se
   If timeColumnFormat is 'origin', provide the time units.  
   See https://pandas.pydata.org/docs/reference/api/pandas.to_datetime.html  
   
-- plotkey : ''  
+- plotColumn : ''  
   Column for preview plot. Use '' or None to use last column. Optional.  
 
-- header : []  
+- headerList : []  
   Overwrite header in the datafile. Use None to interpret first row as header. Optional.  
 
-- header_export : []  
+- exportHeaderList : []  
   Signals to export. If None, header_export = header. Optional.  
 
-- signal_units_dict : {}  
+- unitsOfColumnsDictionary : {}  
   Dictionary for the units of the signals/columns. Use None for no units. Optional.  
 
 ## 2.) Synchronization process  
 
 ### a.) Configure config.ini  
 
-Open config.ini and set all values in section [settingsOutput] and [settingsGeneral]:  
+Open config.ini and set isSensorNewInitialized in section [setetingsInit] to False to execute the data synchronization process of the script.  
+Then set all values in section [settingsOutput] and [settingsGeneral]:  
 
-- INIT_NEW_SENSOR : False  
-  set to False to execute the data synchronization process of the script.  
+- outputInterval: 1  
+  outputInterval: any integer > 0 for the equidistant time intervals.  
 
-- FREQ: 1  
-  Freq: any integer > 0 for the equidistant time intervals.  
+- outputIntervalUnits: 'min'  
+  outputIntervalUnits: 'sec', 'min', 'hours' or 'days' for the units of the time intervals.  
 
-- MODE: 'min'  
-  Mode: sec, min or hours for the units of the time intervals.  
+- exportDirectoryPathString & exportFileNameString:  
+  Directory Path and file extension for the output files.  
 
-- DATA_PATH_SAVE_EXPORT & FILE_EXT_SAVE_EXPORT:  
-  Path for the output files.  
-
-- FORWARD_FILL: True/False  
+- isFilledForward: True/False  
   if True, missing values in exported dataframe will be filled (forward in time).  
   if False, missing values will be replaced with 0's.  
 
-- BACKWARD_FILL: True/False  
+- isFilledBackward: True/False  
   if True, missing values in exported dataframe will be filled (backward in time).  
   if False, missing values will be replaced with 0's.  
 
-- FIRST_FORWARD: True/False  
-  if FORWARD_FILL & BACKWARD_FILL is true, choose which is applied first:  
+- isFilledFirstForwardThenBackward: True/False  
+  if isFilledForward & isFilledBackward is true, choose which is applied first:  
   if True, missing values will be first filled forward in time, then additionally backward (if any values are still missing)  
 
-- FORMAT*OUTPUT_HEADER : True/False  
-  Format output header: If True, all special characters (e.g. /.:&° etc) will be replaced with *  
+- isOutputHeaderFormatted : True/False  
+  Format output header: If True, all special characters (e.g. /.:&° etc) will be replaced with _  
   Note: It is then easier to import the data in 'Veusz'.  
   If False, exported header will be as in the original datafiles or as defined in model_settings.ini  
 
-- START_EXPORT & END_EXPORT  
+- exportStartDate & exportEndDate  
   Start and End Datetime for Export: if provided (if not None), an additional export file will be created  
   containing only data between the given start and end time.  
   Note: All datas defined in config.ini > General_Settings will be read anyway, independent of these inputs.  
   Note: Format must be 'dd.mm.YYYY' (str), e.g.:  
-  START_EXPORT : '8.12.2021'  
-  END_EXPORT : '22.12.2021'  
+  exportStartDate : '8.12.2021'  
+  exportEndDate : '22.12.2021'  
 
-- EXPORT_DAILY: True/False  
-  Export Daily: if true and START_EXPORT & END_EXPORT is provided, additional files will be created  
-  for every day between START_EXPORT and END_EXPORT  
+- areAdditionalFilesExportedForEachDay: True/False  
+  Export Daily: if true and exportStartDate & exportEndDate is provided, additional files will be created  
+  for every day between exportStartDate and exportEndDate  
 
-- USE_SENSOR_i : True/False  
+- isSensorProcessed_i : True/False  
   Configuration of sensors to use for processing/synchronization.  
 
-- DATA_PATH_SENSOR_i, FILE_EXT_SENSOR_i, SETTINGS_SENSOR_i  
-  Provide valid data directories, file path extensions and settings.ini for the sensors with USE_SENSOR_i = True.  
+- sensorDataDirectoryPathString_i, sensorDataFileExtensionString_i, sensorModelSettingsRelativePathString_i  
+  Provide existing data directories, file path extensions and settings.ini for the sensors with isSensorProcessed_i = True.  
   File extensions with for example '\*.csv' will use all datas ending with '.csv' .  
   File extensions with for example 'AE33_AE33\*' will use all datas starting with 'AE33_AE33'.  
   Model Settings directory is in the same directory as this script and should not be moved.  
-  Save new model settings in that directory and provide a valid path for SETTINGS_SENSOR_i (see other models as example).  
-
-
+  Save new model settings in that directory and provide a valid path for sensorModelSettingsRelativePathString_i (see other models as example).  
+  
 ### b.) Run the script  
-
-Run main.py with optional arguments  
-
-- '--inifile' :  
-  Path to configuration (.ini) file. "default-directory"/config.ini if omitted  
-
-- '--intervals' :  
-  csv file with start and end timestamps columns. First row must be the column names (i.e. "start" and "end").  
-  Uses intervals as defined in config.ini if this argument is not provided.  
-  Uses 10 minute intervals if this argument is missing and config.ini is missing too.  
-
-
+  
+Run main.py or main.sh with optional arguments.  
+See './main.sh' for arguments or './\_\_main\_\_.py'  
+  
 ## 3.) Create Custom Scripts (optional)  
-
+  
 If you like to use python for further data analysis or processing (instead of Excel, R, MatLab or similar), look no further!  
 Here you can write your own python scripts for pre- or post-processing of the data (before or after the averaging).  
+  
+### a.) Create default script names and structure in /custom_scripts/:
 
-### a.) Add your model to the functions CheckPreScripts and CheckPostScripts in scripts_functions.py  
-
-Open the /custom_scripts/ directory and add a new python script, e.g. my_custom_script.py  
+Open the './custom_scripts/' directory and add a new python script, e.g. 'my_custom_script.py'.  
 You can use the given scripts as templates.  
-Then add your model to scripts_functions.py:  
+  
+The default structure looks like this:  
+  
+> from lib import np # import numpy if you like to. See '/lib/\_\_init\_\_.py' for loaded libraries.
+>
+> def myNewModel_Pre_Script(sensorObject):
+>> return sensorObject
+>  
+> def myNewModel_Post_Script(sensorObject):
+>> return sensorObject
+  
+
+- If you need more libraries, add them with an import statement in '/lib/\_\_init\_\_.py' as the other libraries.
+  
+
+### b.) Add your model to scripts_functions.py  
+
+Then add your model to './scripts_functions.py':  
 Import it as the other functions and add it to the if-else cases below (both Pre and Post script).  
-'myNewModel' has to match exactly the 'model' name defined in /models_settings/myModel_settings.ini.  
-
-For example:  
-in Check_Pre_Scripts add the lines (in between the other elif-statements):  
-
+  
+- In CheckPreScripts add the lines (in between the other elif-statements):  
+  
 > ...  
-> elif modelName == 'ComPAS-V6':  
->> return ComPAS_scripts_V6.ComPASV6PreScript(sensorObject)  
+> elif model_name == 'modelName':  # <----  
+>>  return myNewModelScriptName.myNewModel_Pre_Script(sensorObject)  # <----  
   
-> elif model_name == 'myNewModel':  <----  
->>  return myNewModelScriptName.myNewModel_Pre_Script(sensorObject)  <----  
+ where 'modelName' has to match exactly the 'modelName' name defined in '/models_settings/myModel_settings.ini'.  
   
-> elif modelName == 'PAX':  
->>  return PAX_scripts.PAXPreScript(sensorObject)  
+- Then, in CheckPostScripts add the lines (in between the other elif-statements):  
   
- 
-
-in Check_Post_Scripts add the lines (in between the other elif-statements):  
-  
-> elif model_name == 'myNewModel':  
+> ...  
+> elif model_name == 'modelName':  
 >> return myNewModelScriptName.myNewModel_Post_Script(sensorObject)  
   
-Make sure to replace the 4 names with your names:  
-- myNewModel  
-- myNewModelScriptName  
+Make sure to replace the names with your names:  
+- modelName  
+- my_custom_script  
 - myNewModel_Pre_Script  
 - myNewModel_Post_Script  
   
  
-### b.) Write your own Scripts  
+### c.) Customize your scripts in more details  
 
-Open your scripts file and define the functions 'myNewModel'\_Pre_Script and 'myNewModel'\_Post_Script:  
+Open your './custom_scripts/my_custom_script.py' file and define the functions in more details.  
+For possible transformations and operations, see help(sensor) in /classes/sensor.py or access pd.DataFrame() methods by calling sensorObject.df1.df or sensorObject.df2.df  
+See implemented functions in /classes/sensor.py and /classes/sensor_df.py.  
+- sensor_df is child class of sensor and holds a pd.Dataframe() (accessed via sensor_df.df)  
+- sensor_df is essentialy a pandas DataFrame with some custom functions added.  
+- sensor is parent class of sensor_df, and child class of object. sensor has 3 sensor_df subclasses, which can be accessed via  
+> sensor.df1  # (for raw data and data after prescript)
+> sensor.df2  # (for data after averaging and postscripts)
+> sensor.df3  # (not used) allowing to handle different sub-dataframes.  
+  
+For more functionality, see library of pandas dataframe.  
+
+Note: sensorObject.df1.df is the pd.Dataframe used to load the data, and transform with PreScripts before averaging.  
+and sensorObject.df2.df is populated during averaging process and then transformed in the PostScripts.  
+Therefore:  
+- In your PreScripts, access, transform or play with sensorObject.df1  
+- In your PostScripts, access, transform or play with sensorObject.df2  
   
 For example:  
-
+  
 > def myNewModel_Pre_Script(sensorObject):  
->> 'Do Nothing...'  
+>> sensorObject.addSubset(np.arange(len(sensorObject.df1.df)), ['OldIndex'], newUnits=['count'], dfIndex=1)  
 >> return sensorObject  
-  
+>  
 > def myNewModel_Post_Script(sensorObject):  
->> sensorObject.LinearModify('Concentration ug/m3', 1000,0)  
->> sensorObject.renameColumnInSensorDf('Concentration ug/m3', 'Concentration ng/m3')  
->> return sensorObject  
-
-### c.) Customize Scripts
-
-New custom functions can be written and added to the /custom_scripts/ directory for custom processing algorithms.  
-
-For example:  
-Calculate the Amplitude and Phase (polar coordinates) from the input datasets X and Y (cartesian coordinates) and return the new dataframes:  
-
-> def Amplitude_Phase(sensor_df,X_Column,Y_Column,R_Name,Theta_Name):  
->> new_R = pd.DataFrame({R_Name: np.sqrt(sensor_df.df[X_Column]**2+sensor_df.df[Y_Column]**2)},index=sensor_df.df.index)  
->> new_Th = pd.DataFrame({Theta_Name: np.arctan2(sensor_df.df[Y_Column],sensor_df.df[X_Column])\*180.0/np.pi},index=sensor_df.df.index)  
->> return new_R, new_Th  
-  
-Then use this function in your Pre/Post-Script:  
-  
-> def myNewModel_Post_Script(sensorObject):  
->> new_R, new_Th = Amplitude_Phase(sensorObject, 'X1', 'Y1', 'R1 [uPa]', 'Theta1 [deg]')  
->> sensorObject.addSubsetToDf(new_R, 'R1 [uPa]')  
->> sensorObject.addSubsetToDf(new_Th, 'Theta1 [deg]')  
+>> sensorObject.LinearModify('Concentration ug/m3', 1000,0, dfIndex=2)  
+>> sensorObject.renameColumnInSensorDf('Concentration ug/m3', 'Concentration ng/m3', dfIndex=2)  
+>> sensorObject.addSubset(np.arange(len(sensorObject.df2.df)), ['NewIndex'], newUnits=['count'], dfIndex=2)  
 >> return sensorObject  
   
 Last but not least, run sensor-data-sync again and see if your custom scripts works :)  
   
-Note:  
+### Happy Coding :)
   
-See implemented functions in /classes/sensor.py and /classes/sensor_df.py.  
-- sensor_df is subclass of sensor  
-- sensor_df is essentialy a pandas DataFrame with some custom functions added.  
-- Sensor is a wraparound class, allowing to handle different sub-dataframes.  
-
-For more functionality, see library of pandas dataframe.  

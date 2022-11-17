@@ -48,20 +48,17 @@ class Sensor(object):
             self.df2,                       panda dataframe for averaged datas and export columns
             self.df3 :                      empty dataframe
             self.signals :                  headerList list (overrides found headerList in file if provided)
-            self.signalsForExport :            signals to export (from self.signals) (optional)
+            self.signalsForExport :         signals to export (from self.signals) (optional)
             self.unitsOfColumnsDictionary:  signal units dictionary for any/all elements of self.signals (optional)
             self.plotColumn :               signal to plot (one of self.signals) (optional)
         # =============================================================================  
         Inputs:
         # =============================================================================
-            sensorName :                    Any name for your sensor (str)
+            sensorName :                    Any name for your sensor (str).
 
             modelName :                     Model name of your sensor (str).
-                                            Currently Fully Implemented: AE33, AE31, SMPS3080_Export, 
-                                            ComPAS-V4, PMS1, MSPTI, miniPTI.
-                                            Any other name can be used for initializing new datasets.
 
-            dataFilePath :                  valid data path (str)
+            dataFilePath :                  path to the file containing table data (str).
 
             headerList = [] :               Override headerList row with another list (length must match with columns). 
                                             If headerList is None, first row will be used as column names.
@@ -73,14 +70,14 @@ class Sensor(object):
                                             if unitsOfColumnsDictionary is None, a basic dictionary 
                                             from the headerList list is created with all units empty ''.
 
-            timeColumnName = '' :           columnName with date time entries (str)
+            timeColumnName = '' :           columnName with date time entries (str).
                                             if timeColumnFormat is set to 'DateTime_2Column', provide 2 column names 
                                             for date and time as a list, e.g. timeColumnName = ['Date','Time'].
 
             timeColumnFormat = '' :         'Excel', 'DateTime_1Column', 'DateTime_2Column', 'Origin' or
                                             'Format = <custom format>'. See below for examples.
 
-            dataSeparator = '' :            separator in datafile, e.g ',', '\t', ';' 
+            dataSeparator = '' :            separator in datafile, e.g ',', '\ t', ';' 
                                             or None (=interpret file structure with python, default)
 
             numberOfRowsToSkip = 0 :        skip first N rows of datafile.
@@ -114,7 +111,7 @@ class Sensor(object):
             #                               Datetime will be infered from 2 columns.
             #
             #
-            # 'Format = ... '               for custom time format
+            # 'Format = ... '               This method works best. Custom time format:
             #                               e.g. %%d.%%m.%%Y %%H:%%M:%%S for 28.12.2021 15:44:02
             #                               Note: Use %% instead % in the .ini file.  
             #                               'Format = %%d.%%m.%%Y %%H:%%M:%%S' = 14.12.2021 10:05:28
@@ -125,8 +122,20 @@ class Sensor(object):
             # 'dateTimeOrigin'              provide custom dateTimeOrigin with pandas datetime, 
             #                               e.g. pd.datetime('1900/01/01')
             #                               --> and also provide timeIntervalUnitsString in this case: 'D', 's'
-            #                       
-       # =============================================================================   
+            #                 
+        # =============================================================================  
+        Methods:
+            getDf
+            getSubset
+            renameColumnInSensorDf
+            addSubset
+            removeSubset
+            dropDuplicates
+            LinearModify
+            NPolynomialModify
+
+        # =============================================================================      
+         =============================================================================   
         """
 
         self.sensorName = sensorName
@@ -159,9 +168,6 @@ class Sensor(object):
 
         # # Remove empty columns ... maybe dangerous to do...
         self.df1.removeEmptyColumnsInDf()
-        self.df1.removeColumnFromDf(' ')
-        self.df1.removeColumnFromDf('  ')
-        self.df1.removeColumnFromDf('   ')
 
         # Init more sensor dataframes
         self.df2 = sensor_df.sensor_df(pd.DataFrame())
@@ -206,8 +212,7 @@ class Sensor(object):
             plotColumnOut = headerListOut[-1]
         # or if plotColumn is not in signals list, use last column for plots
         elif headerListOut.count(plotColumn) == 0:
-            print('There is no column named {plotKey}'.format(
-                plotKey=plotColumn))
+            print(f'There is no column named {plotColumn}.')
             plotColumnOut = headerListOut[-1]
 
         # If timeColumnName is None, use first column for timestamp.
@@ -437,12 +442,12 @@ class Sensor(object):
             dfIndex = 1,2,3, or -1(=all, default)"""
         if dfIndex == -1:
             for i in range(self._dfMaxNumber):
-                self.getDf(i+1).dropDuplicatesInDf(columnName)
+                self.getDf(i+1).df.drop_duplicates(columnName)
         elif type(dfIndex) == list:
             for ind in dfIndex:
-                self.getDf(ind).dropDuplicatesInDf(columnName)
+                self.getDf(ind).df.drop_duplicates(columnName)
         else:
-            self.getDf(dfIndex).dropDuplicatesInDf(columnName)
+            self.getDf(dfIndex).df.drop_duplicates(columnName)
 
     def LinearModify(self, columnName, A, B, dfIndex=-1):
         """Linear modification of the given column in one/all sensor dataframes.

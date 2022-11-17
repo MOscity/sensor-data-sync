@@ -85,56 +85,6 @@ def createInitFileFromDictionary(filepath, dictionary):
     new_config_file.close()
 
 
-def intervalRounder(t_mode, interval):
-    """Rounds a number to nearest multiple of interval.
-        t_mode =    input number (float/int)
-        interval =  number to build multiples of (float/int)
-        returns int
-        """
-    interval_half = interval/2.0
-    t_new = (t_mode//interval)*interval
-    if (t_mode//interval_half) % 2:
-        t_new += interval
-    return int(t_new)
-
-
-# modes = 'sec', 'min' or 'hour'
-def daytimeRoundToNearestInterval(t, interval=10, mode='min'):
-    """Rounds a given daytime to the nearest multiple of the given interval.
-        t =         time of a day, type: datetime
-        interval =  time interval (Default = 10)
-        mode =      time units ('sec', 'min' (default) or 'hours')
-        returns datetime
-        """
-    t_new_sec = t.second
-    t_new_min = t.minute
-    t_new_hour = t.hour
-    t_add = timedelta()
-
-    if mode == 'sec':
-        t_new_sec = intervalRounder(t_new_sec, interval)
-        if (t_new_sec >= 60):
-            t_new_sec = t_new_sec-60
-            t_add = timedelta(minutes=1)
-
-    elif mode == 'min':
-        t_new_sec = 0
-        t_new_min = intervalRounder(t_new_min, interval)
-        if (t_new_min >= 60):
-            t_new_min = t_new_min-60
-            t_add = timedelta(hours=1)
-
-    else:  # mode == 'hours':
-        t_new_sec = 0
-        t_new_min = 0
-        t_new_hour = intervalRounder(t_new_hour, interval)
-        if (t_new_hour >= 24):
-            t_new_hour = t_new_hour-24
-            t_add = timedelta(hours=1)
-
-    return t.replace(second=t_new_sec, microsecond=0, minute=t_new_min, hour=t_new_hour)+t_add
-
-
 def calculateIntervalsAsDefinedInCSVFile(intervalfile, dataframe, decimals=9, column=0, avgMode=True, numerics_only=True):
     """Averages a dataframe and returns new dataframe with time intervals as defined in intervalfile.
         intervalfile =  file with interval., First row must be the column names (i.e. "start" and "end").
@@ -150,11 +100,11 @@ def calculateIntervalsAsDefinedInCSVFile(intervalfile, dataframe, decimals=9, co
         """
     if column == 0:
         column = dataframe.df.columns.values.tolist().copy()
-    df = pd.read_csv(intervalfile,
-                     index_col=False,
-                     parse_dates=['start', 'end'])
+    df_out = pd.read_csv(intervalfile,
+                         index_col=False,
+                         parse_dates=['start', 'end'])
 
-    for index, row in df.iterrows():
+    for index, row in df_out.iterrows():
         subset = dataframe.getDfSubset(row['start'], row['end'], column)
 
         if avgMode:
@@ -163,16 +113,16 @@ def calculateIntervalsAsDefinedInCSVFile(intervalfile, dataframe, decimals=9, co
             columnsDict = dict(subset.median(numeric_only=numerics_only))
 
         for key, value in columnsDict.items():
-            df.loc[index, key] = round(value, decimals)
-    df = df.set_index('end')
-    return df
+            df_out.loc[index, key] = round(value, decimals)
+    df_out = df_out.set_index('end')
+    return df_out
 
 
 def calculateIntervals(dataframe, freq=1, mode='min', decimals=9, column=0, avgMode=True, numerics_only=True):
     """Averages a dataframe and returns new dataframe with equidistant time intervals of <freq> <mode>.
         dataframe =     sensor dataframe to average (sensor_df(pd.DataFrame))
         freq =          interval distance (int)
-        mode =          interval units ('sec', 'min' or 'hours')
+        mode =          interval units ('sec', 'min', 'hours' or 'days').
         decimals =      decimal points to round mean/median value
         column =        columns to export as subset from dataframe
                         if column = 0, all columns are exported
@@ -185,76 +135,76 @@ def calculateIntervals(dataframe, freq=1, mode='min', decimals=9, column=0, avgM
         returns pd.DataFrame
         """
     freq = int(freq)
-    df = pd.DataFrame(columns=['start', 'end'])
+    df_out = pd.DataFrame(columns=['start', 'end'])
 
     if mode == 'sec':
         dt_0 = timedelta(seconds=freq)
         ruler = rrule.SECONDLY
+        mode_code = 'S'
+        # Note: 'L' is milliseconds.
     elif mode == 'min':
         dt_0 = timedelta(minutes=freq)
         ruler = rrule.MINUTELY
-    else:  # mode == 'hours'
+        mode_code = 'T'
+    elif mode == 'hours':
         dt_0 = timedelta(hours=freq)
         ruler = rrule.HOURLY
+        mode_code = 'H'
+    else:  # mode == 'days':
+        dt_0 = timedelta(days=freq)
+        ruler = rrule.DAILY
+        mode_code = 'd'
 
     if column == 0:
         column = dataframe.df.columns.values.tolist().copy()
 
-    tmin = daytimeRoundToNearestInterval(
-        (dataframe.df.first_valid_index()), freq, mode)
-    tmax = daytimeRoundToNearestInterval(
-        (dataframe.df.last_valid_index()), freq, mode) - dt_0
+    # Get first and last time index
+    tmin = dataframe.df.first_valid_index()
+    tmax = dataframe.df.last_valid_index()-dt_0/2.0
 
-    inv_counter = 0
+    # Round to nearest timestamp with the given interval and units.
+    tmin = tmin.round(f'{freq}{mode_code}')
+    tmax = tmax.round(f'{freq}{mode_code}')
 
     for dt in rrule.rrule(ruler, interval=freq, dtstart=tmin, until=tmax):
         start = dt
         end = dt+dt_0
 
-        #start_shifted = (start not in dataframe.df.index)
-        #end_shifted = (end not in dataframe.df.index)
-        start_value = start
-        end_value = end
+        start_new = start
+        end_new = end
 
-        # print('------------')
-        while (start_value not in dataframe.df.index):
-            start_value -= timedelta(seconds=1)
-            #print('Shifting Start Time...', start_value)
-            if start_value <= tmin:
-                break
+        if (start not in dataframe.df.index):
+            iloc_idx = dataframe.df.index.searchsorted(dt-dt_0)
+            if iloc_idx > 0:
+                iloc_idx -= 1
+            loc_idx = dataframe.df.index[iloc_idx]
+            start_new = loc_idx
 
-        while (end_value not in dataframe.df.index):
-            end_value += timedelta(seconds=1)
-            #print('Shifting End Time...', end_value)
-            if end_value >= tmax:
-                break
+        if (end not in dataframe.df.index):
+            iloc_idx = dataframe.df.index.searchsorted(dt+dt_0)
+            if iloc_idx >= len(dataframe.df)-1:
+                iloc_idx = -1
+            loc_idx = dataframe.df.index[iloc_idx]
+            end_new = loc_idx
 
-        while (start not in dataframe.df.index):
-            start_value += timedelta(seconds=1)
-            #print('Shifting Start Time forward...', start_value)
-            if start_value >= end_value:
-                break
+        # if end_new-start_new > 2*dt_0:
+        #     print(f'{"":#^5}')
+        #     print(
+        #         f'WARNING: Time gap in subset is larger than usual.\n - Start Time: {start}\n - End Time: {end}\n - Columns: {column}')
 
-        # if start_shifted:
-        #     print('Shifted Start Time from', start, 'to', start_value)
-        # if end_shifted:
-        #     print('Shifted End Time from', end, 'to', end_value)
+        # get the original subset, but write the rounded time
+        subset = dataframe.getDfSubset(start_new, end_new, column)
 
-        subset = dataframe.getDfSubset(start_value, end_value, column)
-
-        # print('my Subset', subset)
-        # Uff this is dangerous...
         if len(subset) == 0:
-            print('Warning! Empty Subset')
-            subset = dataframe.getDfSubset(
-                start_value-2*dt_0, end_value, column)
+            print(f'{"":#^5}')
+            print(
+                f'WARNING: Empty Subset.\n - Start Time: {start}\n - End Time: {end}\n - Columns: {column}')
 
-        index = len(df)
-        df.loc[index, 'start'] = start
-        df.loc[index, 'end'] = end
-        #print('start:', start)
-        #print('end:', end)
-        # print(subset)
+        else:
+            index = len(df_out)
+            # write the rounded time
+            df_out.loc[index, 'start'] = start
+            df_out.loc[index, 'end'] = end
 
         if avgMode:
             columnsDict = dict(subset.mean(numeric_only=numerics_only))
@@ -262,10 +212,8 @@ def calculateIntervals(dataframe, freq=1, mode='min', decimals=9, column=0, avgM
             columnsDict = dict(subset.median(numeric_only=numerics_only))
 
         for key, value in columnsDict.items():
-            df.loc[index, key] = round(value, decimals)
+            df_out.loc[index, key] = round(value, decimals)
 
-        inv_counter += 1
+    df_out = df_out.set_index('end')
 
-    df = df.set_index('end')
-
-    return df
+    return df_out
