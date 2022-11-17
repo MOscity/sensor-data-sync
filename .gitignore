@@ -4,6 +4,7 @@ custom_scripts/__pycache__
 __pycache__
 classes/__pycache__
 configs/config_template_local_testing.ini
+configs/config_template_local_testing_2.ini
 
 # If in WSL environment (e.g. your path is /mnt/c/Users/... instead of C:/Users/...) you can create
 # a directory called 'C*/export/path' within this directory, if you call ./main.sh --export_dir='C:/export/path'
