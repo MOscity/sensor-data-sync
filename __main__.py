@@ -60,23 +60,23 @@ if __name__ == "__main__":
                         'Note: If the directory does not exist, it will be created.'
                         )
 
-    # parser.add_argument('--ffill', required=False, action='store_true', dest='ffill_arg', default=False,
-    #                     help=f'Activate Forward Fill. See readme.md about isFilledForward for more information.'
-    #                     )
+    parser.add_argument('--ffill', required=False, action='store_true', dest='ffill_arg', default=False,
+                        help=f'Activate Forward Fill. See readme.md about isFilledForward for more information.'
+                        )
 
-    # parser.add_argument('--bfill', required=False, action='store_true', dest='bfill_arg', default=False,
-    #                     help=f'Activate Backward Fill. See readme.md about isFilledBackward for more information.'
-    #                     )
+    parser.add_argument('--bfill', required=False, action='store_true', dest='bfill_arg', default=False,
+                        help=f'Activate Backward Fill. See readme.md about isFilledBackward for more information.'
+                        )
 
-    # parser.add_argument('--ffbb', required=False, action='store_true', dest='ffbb_arg', default=False,
-    #                     help=f'Activate Fill Forward before Fill Backward, if both others are true.'
-    #                     ' See readme.md about isFilledFirstForwardThenBackward for more information.'
-    #                     )
+    parser.add_argument('--ffbb', required=False, action='store_true', dest='ffbb_arg', default=False,
+                        help=f'Activate Fill Forward before Fill Backward, if both others are true.'
+                        ' See readme.md about isFilledFirstForwardThenBackward for more information.'
+                        )
 
-    # parser.add_argument('--format_header', required=False, action='store_true', dest='format_header_arg', default=False,
-    #                     help=f'Format the resulting header replacing all special characters'
-    #                     'with _ or another custom-defined character.'
-    #                     )
+    parser.add_argument('--format_header', required=False, action='store_true', dest='format_header_arg', default=False,
+                        help=f'Format the resulting header replacing all special characters'
+                        'with _ or another custom-defined character.'
+                        )
 
     # parser.add_argument('--sensor', required=False, metavar='sensorProcess_i_arg', dest='sensorProcess_i_arg', type=list,
     #                     help=f'Activate processing of sensor i. Provide a list like [1,2,3,...]'.
@@ -142,13 +142,28 @@ if __name__ == "__main__":
                 CSV_df['end']).diff(1).dt.total_seconds().mean())
             outputIntervalUnits = 'sec'
 
-        isFilledForward = eval(config['settingsOutput']['isFilledForward'])
-        isFilledBackward = eval(config['settingsOutput']['isFilledBackward'])
-        isFilledFirstForwardThenBackward = eval(
-            config['settingsOutput']['isFilledFirstForwardThenBackward'])
+        if args.ffill_arg:
+            isFilledForward = True
+        else:
+            isFilledForward = eval(config['settingsOutput']['isFilledForward'])
 
-        isOutputHeaderFormatted = eval(
-            config['settingsOutput']['isOutputHeaderFormatted'])
+        if args.bfill_arg:
+            isFilledBackward = True
+        else:
+            isFilledBackward = eval(
+                config['settingsOutput']['isFilledBackward'])
+
+        if args.ffbb_arg:
+            isFilledFirstForwardThenBackward = True
+        else:
+            isFilledFirstForwardThenBackward = eval(
+                config['settingsOutput']['isFilledFirstForwardThenBackward'])
+
+        if args.format_header_arg:
+            isOutputHeaderFormatted = True
+        else:
+            isOutputHeaderFormatted = eval(
+                config['settingsOutput']['isOutputHeaderFormatted'])
 
         exportStartDate = eval(config['settingsOutput']['exportStartDate'])
         exportEndDate = eval(config['settingsOutput']['exportEndDate'])
